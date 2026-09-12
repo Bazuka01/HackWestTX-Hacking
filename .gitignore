@@ -1,0 +1,10 @@
+# Local API keys
+.env
+
+# Python virtual environments
+.venv/
+venv/
+
+# Generated Python files
+__pycache__/
+*.pyc
