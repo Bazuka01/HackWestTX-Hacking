@@ -1,0 +1,8 @@
+# Install from the backend folder:
+# run this in terminal > python -m pip install -r requirements.txt
+
+# Gemini API library
+google-genai
+
+# Loads environment variables from .env
+python-dotenv
