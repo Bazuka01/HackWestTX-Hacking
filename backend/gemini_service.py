@@ -3,8 +3,13 @@ import json
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
-from sample_orgs import organizations
 
+# Load the actual organization list from our JSON file.
+with (Path(__file__).parent / "orgs.json").open(
+    encoding="utf-8"
+) as file:
+    organizations = json.load(file)
+    
 # Load the API key from .env and create the Gemini client.
 load_dotenv(Path(__file__).parent / ".env")
 api_key = os.getenv("GEMINI_API_KEY")

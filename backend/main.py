@@ -1,7 +1,14 @@
+import json
+from pathlib import Path
 from fastapi import FastAPI
 from pydantic import BaseModel
 from gemini_service import recommend_orgs
-from sample_orgs import organizations
+
+# Load the actual organization list from our JSON file.
+with (Path(__file__).parent / "orgs.json").open(
+    encoding="utf-8"
+) as file:
+    organizations = json.load(file)
 
 # Create the backend application.
 app = FastAPI()
