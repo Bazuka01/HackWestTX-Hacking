@@ -4,11 +4,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 
-# Load the actual organization list from our JSON file.
-with (Path(__file__).parent / "orgs.json").open(
-    encoding="utf-8"
-) as file:
-    organizations = json.load(file)
     
 # Load the API key from .env and create the Gemini client.
 load_dotenv(Path(__file__).parent / ".env")
@@ -26,7 +21,15 @@ def recommend_orgs(student_profile, organizations):
     Recommend exactly three distinct organizations for this student.
 
     Use only organizations from the supplied list.
-    Match their stated interests, hobbies, and major.
+    Consider the student's major, interests, hobbies, optional class year,
+    and optional ethnicity.
+
+    Use ethnicity only to help identify relevant cultural communities.
+    Do not restrict the student to cultural organizations or assume their
+    interests based on ethnicity.
+
+    Use only facts contained in the supplied organization data.
+    Do not invent events, activities, eligibility requirements, or details.
     Return each organization's ID and a one-sentence explanation.
 
     Student profile:
@@ -39,7 +42,7 @@ def recommend_orgs(student_profile, organizations):
     # Make one Gemini call. The schema requires three matches in JSON format
     # and limits organization IDs to the ones in our supplied list.
     response = client.interactions.create(
-        model="gemini-3.8-flash",
+        model="gemini-3.5-flash-lite",
         input=prompt,
         response_format={
             "type": "text",
@@ -81,14 +84,11 @@ def recommend_orgs(student_profile, organizations):
     return result
 
 
-# Temporary test: runs when this file is executed directly, not when imported.
-if __name__ == "__main__":
-    student_profile = {
-        "major": "Computer Science",
-        "interests": ["technology", "community service"],
-        "hobbies": ["gaming", "drawing"],
-        "class_year": "Freshman"
-    }
+    # Load organizations only for the standalone test.
+    with (Path(__file__).parent / "org.json").open(
+        encoding="utf-8"
+    ) as file:
+        organizations = json.load(file)
 
-    print("Finding matches...", flush=True)
-    print(recommend_orgs(student_profile, organizations))
+    # Keep your sample student profile and print statements here.
+    

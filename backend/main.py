@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from gemini_service import recommend_orgs
 
 # Load the actual organization list from our JSON file.
-with (Path(__file__).parent / "orgs.json").open(
+with (Path(__file__).parent / "org.json").open(
     encoding="utf-8"
 ) as file:
     organizations = json.load(file)
@@ -22,7 +22,8 @@ class StudentProfile(BaseModel):
     major: str
     interests: list[str]
     hobbies: list[str]
-    class_year: str
+    class_year: str | None = None
+    ethnicity: str | None = None
 
 
 # Receive answers, call Gemini, and return the three matches.
