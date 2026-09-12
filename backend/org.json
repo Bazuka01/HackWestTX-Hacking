@@ -1,0 +1,507 @@
+[
+  {
+    "id": "org_001",
+    "name": "Block & Bridle",
+    "category": "Agricultural Sciences & Natural Resources",
+    "interestTags": [
+      "agriculture",
+      "environment",
+      "outdoors",
+      "animals"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_002",
+    "name": "Collegiate Cattlemen's Association",
+    "category": "Agricultural Sciences & Natural Resources",
+    "interestTags": [
+      "agriculture",
+      "environment",
+      "outdoors",
+      "animals"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_003",
+    "name": "Agronomy Club",
+    "category": "Agricultural Sciences & Natural Resources",
+    "interestTags": [
+      "agriculture",
+      "environment",
+      "outdoors",
+      "animals"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_004",
+    "name": "Food Science Club",
+    "category": "Agricultural Sciences & Natural Resources",
+    "interestTags": [
+      "agriculture",
+      "environment",
+      "outdoors",
+      "animals"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_005",
+    "name": "Minorities in Agriculture, Natural Resources and Related Sciences",
+    "category": "Agricultural Sciences & Natural Resources",
+    "interestTags": [
+      "agriculture",
+      "environment",
+      "outdoors",
+      "animals"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_006",
+    "name": "Association of Biologists",
+    "category": "Arts & Sciences",
+    "interestTags": [
+      "stem",
+      "research",
+      "academic"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_007",
+    "name": "Criminology Club",
+    "category": "Arts & Sciences",
+    "interestTags": [
+      "stem",
+      "research",
+      "academic"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_008",
+    "name": "The Math Club",
+    "category": "Arts & Sciences",
+    "interestTags": [
+      "stem",
+      "research",
+      "academic"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_009",
+    "name": "Forensic Science Society",
+    "category": "Arts & Sciences",
+    "interestTags": [
+      "stem",
+      "research",
+      "academic"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_010",
+    "name": "American Chemical Society-Student Affiliate",
+    "category": "Arts & Sciences",
+    "interestTags": [
+      "stem",
+      "research",
+      "academic"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_011",
+    "name": "Finance Association",
+    "category": "Business",
+    "interestTags": [
+      "business",
+      "entrepreneurship",
+      "finance"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_012",
+    "name": "Raider Entrepreneurship Club",
+    "category": "Business",
+    "interestTags": [
+      "business",
+      "entrepreneurship",
+      "finance"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_013",
+    "name": "Women In Business",
+    "category": "Business",
+    "interestTags": [
+      "business",
+      "entrepreneurship",
+      "finance"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_014",
+    "name": "Tech Marketing Association",
+    "category": "Business",
+    "interestTags": [
+      "business",
+      "entrepreneurship",
+      "finance"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_015",
+    "name": "Investment Management Association",
+    "category": "Business",
+    "interestTags": [
+      "business",
+      "entrepreneurship",
+      "finance"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_016",
+    "name": "Association For Computing Machinery (ACM)",
+    "category": "Engineering / Computer Science",
+    "interestTags": [
+      "technology",
+      "stem",
+      "engineering"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_017",
+    "name": "Institute of Electrical and Electronics Engineers (IEEE)",
+    "category": "Engineering / Computer Science",
+    "interestTags": [
+      "technology",
+      "stem",
+      "engineering"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_018",
+    "name": "Society of Women Engineers (SWE)",
+    "category": "Engineering / Computer Science",
+    "interestTags": [
+      "technology",
+      "stem",
+      "engineering"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_019",
+    "name": "National Society of Black Engineers (NSBE)",
+    "category": "Engineering / Computer Science",
+    "interestTags": [
+      "technology",
+      "stem",
+      "engineering"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_020",
+    "name": "Society of Hispanic Professional Engineers (SHPE)",
+    "category": "Engineering / Computer Science",
+    "interestTags": [
+      "technology",
+      "stem",
+      "engineering"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_021",
+    "name": "HOSA Future Health Professionals",
+    "category": "Health & Human Sciences",
+    "interestTags": [
+      "health",
+      "medicine",
+      "wellness"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_022",
+    "name": "Pre-Nursing Association",
+    "category": "Health & Human Sciences",
+    "interestTags": [
+      "health",
+      "medicine",
+      "wellness"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_023",
+    "name": "Pre-Dental Society",
+    "category": "Health & Human Sciences",
+    "interestTags": [
+      "health",
+      "medicine",
+      "wellness"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_024",
+    "name": "CHAARG",
+    "category": "Health & Human Sciences",
+    "interestTags": [
+      "health",
+      "medicine",
+      "wellness"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_025",
+    "name": "American Medical Student Association Tech Chapter",
+    "category": "Health & Human Sciences",
+    "interestTags": [
+      "health",
+      "medicine",
+      "wellness"
+    ],
+    "hobbyTags": [],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_026",
+    "name": "Hispanic Student Society",
+    "category": "Culture/Nationality",
+    "interestTags": [
+      "culture",
+      "community",
+      "identity"
+    ],
+    "hobbyTags": [],
+    "cultureTag": "Hispanic/Latino",
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_027",
+    "name": "African Students Organization",
+    "category": "Culture/Nationality",
+    "interestTags": [
+      "culture",
+      "community",
+      "identity"
+    ],
+    "hobbyTags": [],
+    "cultureTag": "African/Black",
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_028",
+    "name": "Asian Pacific American Law Student Association",
+    "category": "Culture/Nationality",
+    "interestTags": [
+      "culture",
+      "community",
+      "identity"
+    ],
+    "hobbyTags": [],
+    "cultureTag": "Asian/Pacific Islander",
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_029",
+    "name": "Caribbean Student Association",
+    "category": "Culture/Nationality",
+    "interestTags": [
+      "culture",
+      "community",
+      "identity"
+    ],
+    "hobbyTags": [],
+    "cultureTag": "Caribbean",
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_030",
+    "name": "Filipino Student Association",
+    "category": "Culture/Nationality",
+    "interestTags": [
+      "culture",
+      "community",
+      "identity"
+    ],
+    "hobbyTags": [],
+    "cultureTag": "Filipino",
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_031",
+    "name": "Matador Powerlifting Team",
+    "category": "Gym/Fitness",
+    "interestTags": [
+      "fitness"
+    ],
+    "hobbyTags": [
+      "powerlifting",
+      "weightlifting",
+      "gym"
+    ],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_032",
+    "name": "Raider Backpacking Club",
+    "category": "Outdoor Activities",
+    "interestTags": [
+      "outdoors"
+    ],
+    "hobbyTags": [
+      "hiking",
+      "backpacking",
+      "camping"
+    ],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_033",
+    "name": "Tech Choirs",
+    "category": "Music/Art",
+    "interestTags": [
+      "music",
+      "arts"
+    ],
+    "hobbyTags": [
+      "singing",
+      "performance"
+    ],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_034",
+    "name": "Tech Esports Association",
+    "category": "Gaming",
+    "interestTags": [
+      "gaming",
+      "technology"
+    ],
+    "hobbyTags": [
+      "video games",
+      "esports"
+    ],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  },
+  {
+    "id": "org_035",
+    "name": "Best Buddies",
+    "category": "Community Service",
+    "interestTags": [
+      "volunteering",
+      "community service"
+    ],
+    "hobbyTags": [
+      "mentorship",
+      "inclusion"
+    ],
+    "cultureTag": null,
+    "contact": null,
+    "meetingTime": null
+  }
+]
