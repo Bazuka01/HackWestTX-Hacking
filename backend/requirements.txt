@@ -6,3 +6,9 @@ google-genai
 
 # Loads environment variables from .env
 python-dotenv
+
+# Receives frontend requests and returns backend responses
+fastapi
+
+# Runs the FastAPI application as a web server
+uvicorn
