@@ -1,10 +1,19 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from database import fetch_events, fetch_orgs
 from gemini_service import recommend_orgs
 
 # Create the backend application.
 app = FastAPI()
+
+# Allow the Next.js frontend in web/ to call this API from the browser.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Return a test message when someone visits the home URL. A small health check to make sure the backend is running.
 @app.get("/")

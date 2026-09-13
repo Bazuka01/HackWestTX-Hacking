@@ -1,41 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import gsap from "gsap";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { Check, ChevronDown } from "lucide-react";
+import { formatEventDate } from "@/lib/api";
+import { useSavedRecommendations } from "@/lib/studentSession";
 
 gsap.registerPlugin(InertiaPlugin);
 
 type EventItem = {
   id: string;
   title: string;
+  orgName: string;
+  startDate: string;
   date: string;
+  time: string | null;
   location: string;
 };
-
-const EVENTS: EventItem[] = [
-  { id: "1", title: "Career Fair", date: "Sep 18", location: "Student Union" },
-  { id: "2", title: "Hackathon Kickoff", date: "Sep 20", location: "Engineering Hall" },
-  { id: "3", title: "Club Rush", date: "Sep 22", location: "Main Quad" },
-  { id: "4", title: "Networking Night", date: "Sep 24", location: "Business Building" },
-  { id: "5", title: "Study Jam", date: "Sep 26", location: "Library" },
-  { id: "6", title: "Alumni Panel", date: "Sep 29", location: "Auditorium" },
-  { id: "7", title: "Startup Pitch", date: "Oct 2", location: "Innovation Lab" },
-  { id: "8", title: "Resume Workshop", date: "Oct 4", location: "Career Center" },
-  { id: "9", title: "Intramural Kickoff", date: "Oct 6", location: "Rec Fields" },
-  { id: "10", title: "Coding Bootcamp", date: "Oct 9", location: "CS Building" },
-  { id: "11", title: "Art Showcase", date: "Oct 11", location: "Fine Arts Gallery" },
-  { id: "12", title: "Trivia Night", date: "Oct 13", location: "Student Center" },
-  { id: "13", title: "Volunteer Day", date: "Oct 16", location: "Community Hall" },
-  { id: "14", title: "Music Festival", date: "Oct 19", location: "Amphitheater" },
-];
 
 export default function SavedEventsPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showScrollArrow, setShowScrollArrow] = useState(false);
+  const recommendations = useSavedRecommendations();
+
+  // Every event from the student's recommended organizations, soonest first.
+  const events = useMemo<EventItem[]>(
+    () =>
+      (recommendations ?? [])
+        .flatMap((rec) =>
+          rec.events.map((event) => ({
+            id: event.id,
+            title: event.title,
+            orgName: rec.organization.name,
+            startDate: event.start_date,
+            date: formatEventDate(event.start_date),
+            time: event.start_time,
+            location: event.location ?? "Location TBA",
+          }))
+        )
+        .sort((a, b) => a.startDate.localeCompare(b.startDate)),
+    [recommendations]
+  );
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -102,7 +111,8 @@ export default function SavedEventsPage() {
     cleanups.push(() => root.removeEventListener("mousemove", handleMouseMove));
 
     return () => cleanups.forEach((fn) => fn());
-  }, []);
+    // Events arrive after the first render, so re-attach once the cards exist.
+  }, [events]);
 
   // Show a scroll arrow only while there's more content below the fold.
   useEffect(() => {
@@ -120,7 +130,7 @@ export default function SavedEventsPage() {
       window.removeEventListener("scroll", checkScroll);
       window.removeEventListener("resize", checkScroll);
     };
-  }, []);
+  }, [events]);
 
   function scrollMore() {
     window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
@@ -136,8 +146,24 @@ export default function SavedEventsPage() {
           Saved Events
         </h1>
 
+        {recommendations === null && (
+          <EmptyState
+            message="Answer a few questions to get matched with organizations and their events."
+            href="/majClass"
+            linkLabel="Get started"
+          />
+        )}
+
+        {recommendations && events.length === 0 && (
+          <EmptyState
+            message="Your matched organizations haven't posted any events yet."
+            href="/recommendations"
+            linkLabel="Back to your matches"
+          />
+        )}
+
         <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {EVENTS.map((event) => {
+          {events.map((event) => {
             const isSelected = selected.has(event.id);
             return (
               <button
@@ -160,10 +186,15 @@ export default function SavedEventsPage() {
                     {event.title}
                   </p>
                   <p className="mt-1 text-xs text-slate-500/70">
+                    {event.orgName}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500/70">
                     {event.location}
                   </p>
                 </div>
-                <p className="text-xs text-slate-500">{event.date}</p>
+                <p className="text-xs text-slate-500">
+                  {event.time ? `${event.date} · ${event.time}` : event.date}
+                </p>
               </button>
             );
           })}
@@ -186,6 +217,28 @@ export default function SavedEventsPage() {
           </motion.button>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function EmptyState({
+  message,
+  href,
+  linkLabel,
+}: {
+  message: string;
+  href: string;
+  linkLabel: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <p className="text-slate-500/70">{message}</p>
+      <Link
+        href={href}
+        className="rounded-full bg-slate-500 px-6 py-3 text-orange-50 transition-colors hover:bg-slate-600"
+      >
+        {linkLabel}
+      </Link>
     </div>
   );
 }

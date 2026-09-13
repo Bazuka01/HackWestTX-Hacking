@@ -13,8 +13,15 @@ function hash(seed: number): number {
   return x - Math.floor(x);
 }
 
+// Browsers shorten long decimals in style attributes (92.16903898vw becomes
+// 92.169vw), which React reports as a hydration mismatch. Two decimals
+// survive unchanged.
+function round(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export const CHAIN_PIECES: ChainPiece[] = Array.from({ length: COUNT }, (_, i) => ({
-  left: hash(i * 1.7 + 1) * 100,
-  top: hash(i * 3.1 + 2) * 100,
-  size: 20 + hash(i * 5.3 + 3) * 24,
+  left: round(hash(i * 1.7 + 1) * 100),
+  top: round(hash(i * 3.1 + 2) * 100),
+  size: round(20 + hash(i * 5.3 + 3) * 24),
 }));
