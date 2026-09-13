@@ -1,0 +1,8 @@
+# Install from the db folder:
+# run this in terminal > python -m pip install -r requirements.txt
+
+# Connects Python to the TigerData Postgres database
+psycopg2-binary
+
+# Loads environment variables from .env
+python-dotenv
