@@ -69,6 +69,7 @@ const en = {
     kept: "Kept",
   },
   nav: {
+    home: "Home",
     browse: "Browse",
     saved: "Saved Events",
     calendar: "Calendar",
@@ -345,6 +346,7 @@ const es: Messages = {
     kept: "Fijada",
   },
   nav: {
+    home: "Inicio",
     browse: "Explorar",
     saved: "Eventos guardados",
     calendar: "Calendario",
@@ -619,6 +621,7 @@ const fr: Messages = {
     kept: "Gardée",
   },
   nav: {
+    home: "Accueil",
     browse: "Explorer",
     saved: "Événements enregistrés",
     calendar: "Calendrier",
@@ -893,6 +896,7 @@ const hi: Messages = {
     kept: "रखा गया",
   },
   nav: {
+    home: "होम",
     browse: "ब्राउज़ करें",
     saved: "सेव किए इवेंट",
     calendar: "कैलेंडर",
@@ -1167,6 +1171,7 @@ const pt: Messages = {
     kept: "Mantida",
   },
   nav: {
+    home: "Início",
     browse: "Explorar",
     saved: "Eventos salvos",
     calendar: "Calendário",

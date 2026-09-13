@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Bookmark, CalendarDays, LogOut, Search } from "lucide-react";
+import { Bookmark, CalendarDays, Home, LogOut, Search } from "lucide-react";
 import { useT } from "@/components/LanguageProvider";
 import connectXLogo from "@/components/icons/connectx-logo.png";
 
@@ -19,6 +19,7 @@ function tabClass(isActive: boolean) {
 export function DashboardNav({ active }: { active: ActiveTab }) {
   const t = useT();
   const tabs = [
+    { id: "home", href: "/homePage", label: t.nav.home, Icon: Home },
     { id: "browse", href: "/browse", label: t.nav.browse, Icon: Search },
     { id: "saved", href: "/savedEvents", label: t.nav.saved, Icon: Bookmark },
     { id: "calendar", href: "/calendar", label: t.nav.calendar, Icon: CalendarDays },
