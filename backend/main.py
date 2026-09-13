@@ -13,10 +13,11 @@ with (Path(__file__).parent / "org.json").open(
 # Create the backend application.
 app = FastAPI()
 
-# Return a test message when someone visits the home URL.
+# Return a test message when someone visits the home URL. A small health check to make sure the backend is running.
 @app.get("/")
 def home():
     return {"message": "Our backend is running!"}
+
 # Define the student answers this endpoint accepts.
 class StudentProfile(BaseModel):
     major: str
