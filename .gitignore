@@ -1,6 +1,5 @@
-# Local API keys
+# Local environment files
 .env
-back.env
 
 # Python virtual environments
 .venv/

@@ -3,8 +3,8 @@ from pathlib import Path
 import psycopg2
 from dotenv import load_dotenv
 
-# Load the database URL from the .env file in the project root.
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Use the same environment file as the backend application.
+load_dotenv(Path(__file__).parent.parent / "backend" / ".env")
 
 
 # Open a connection to the ConnectX database.
