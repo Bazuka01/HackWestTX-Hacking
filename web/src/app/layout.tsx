@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Raleway, Geist_Mono } from "next/font/google";
+import { Raleway, Nunito, Geist_Mono } from "next/font/google";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import "./globals.css";
 
 const raleway = Raleway({
   variable: "--font-raleway",
   subsets: ["latin"],
+});
+
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({
@@ -22,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${raleway.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${raleway.variable} ${nunito.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <LanguageProvider>{children}</LanguageProvider>

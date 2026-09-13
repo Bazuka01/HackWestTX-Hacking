@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { DashboardNav } from "@/components/DashboardNav";
+import { ScrollProgressRail } from "@/components/ScrollProgressRail";
+import { MotionPathTrail } from "@/components/MotionPathTrail";
+import { Doors } from "@/components/effects/Doors";
 import { saveEvent } from "@/app/actions";
 import type { Dashboard } from "@/lib/api";
 import { matchColors } from "@/lib/matchColors";
@@ -23,6 +27,7 @@ export function HomePage({
   const colors = matchColors(dashboard);
   const matches = [...recommendations, ...suggestions];
 
+  const [revealed, setRevealed] = useState(false);
   const [savedIds, setSavedIds] = useState(
     () => new Set(dashboard.saved_events.map((event) => event.id))
   );
@@ -70,13 +75,21 @@ export function HomePage({
   const summary = [profile?.major, profile?.class_year].filter(Boolean).join(" · ");
 
   return (
-    <div className="min-h-screen w-full bg-[#0D0D0D]">
+    <div className="min-h-screen w-full bg-[#1A1A1A]">
+      <Doors variant="in" onComplete={() => setRevealed(true)} />
       <DashboardNav active="home" />
 
-      <div className="mx-auto max-w-5xl px-6 pt-28 pb-16">
+      <motion.div
+        className="relative mx-auto max-w-5xl px-6 pt-28 pb-16"
+        initial={{ opacity: 0, y: 8 }}
+        animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <MotionPathTrail />
+
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="text-2xl font-bold tracking-tight text-[#F2F0EE]">
+            <div className="font-heading text-4xl font-extrabold tracking-tight text-[#DC143C]">
               Welcome back, {firstName}
             </div>
             {summary && (
@@ -85,17 +98,17 @@ export function HomePage({
           </div>
           <Link
             href="/majClass"
-            className="text-sm font-semibold text-[#8C8785] transition-colors hover:text-[#C8102E]"
+            className="text-sm font-semibold text-[#8C8785] transition-colors hover:text-[#DC143C]"
           >
             Edit your answers
           </Link>
         </div>
 
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-[#F2F0EE]">
+        <section className="relative">
+          <h2 className="font-heading mb-4 text-lg font-semibold text-white">
             Your Top Matches
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:grid-rows-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:grid-rows-2">
             {recommendations.map((match, i) => (
               <div
                 key={match.org_id}
@@ -112,15 +125,16 @@ export function HomePage({
                 />
               </div>
             ))}
+            <ScrollProgressRail className="hidden sm:col-start-5 sm:row-start-2 sm:block sm:self-center" />
           </div>
         </section>
 
         <section className="mt-10">
-          <h2 className="mb-4 text-lg font-semibold text-[#F2F0EE]">
+          <h2 className="font-heading mb-4 text-lg font-semibold text-white">
             Upcoming Events For You
           </h2>
           {events.length === 0 ? (
-            <p className="rounded-lg border border-[#2E2E2E] bg-[#1A1A1A] p-6 text-sm text-[#8C8785]">
+            <p className="rounded-lg border border-[#2E2E2E] bg-black p-6 text-sm text-[#8C8785]">
               None of your matches have posted upcoming events yet. Check back
               soon.
             </p>
@@ -143,8 +157,8 @@ export function HomePage({
 
         {suggestions.length > 0 && (
           <section className="mt-10">
-            <h2 className="mb-4 text-lg font-semibold text-[#F2F0EE]">
-              More For You
+            <h2 className="font-heading mb-4 text-lg font-semibold text-white">
+              Suggested for you
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {suggestions.map((match) => (
@@ -155,7 +169,7 @@ export function HomePage({
             </div>
           </section>
         )}
-      </div>
+      </motion.div>
 
       <SavedEventToast
         open={toastOpen}

@@ -6,8 +6,8 @@ export function StepIndicator({ active }: { active: 1 | 2 }) {
           key={step}
           className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-medium transition-colors ${
             step === active
-              ? "border-slate-500 bg-slate-500 text-orange-50"
-              : "border-slate-500/20 text-slate-500/40"
+              ? "border-[#DC143C] bg-[#DC143C] text-white"
+              : "border-[#F3A5A5]/25 text-[#F3A5A5]/50"
           }`}
         >
           {step}

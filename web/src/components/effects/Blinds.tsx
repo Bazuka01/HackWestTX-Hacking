@@ -11,7 +11,7 @@ export function Blinds({ onComplete }: { onComplete?: () => void }) {
       {Array.from({ length: SLAT_COUNT }).map((_, i) => (
         <motion.div
           key={i}
-          className="w-full flex-1 bg-slate-500"
+          className="w-full flex-1 bg-[#DC143C]"
           style={{ transformOrigin: "top" }}
           initial={{ scaleY: 1 }}
           animate={{ scaleY: 0 }}
