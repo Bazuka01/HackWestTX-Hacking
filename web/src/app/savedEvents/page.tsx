@@ -1,29 +1,52 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import gsap from "gsap";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
-import { X, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { DashboardNav } from "@/components/DashboardNav";
-import { useSavedEvents } from "@/lib/useSavedEvents";
-import { EventDetailsDialog } from "./EventDetailsDialog";
-import type { SavedEvent } from "@/lib/savedEventsStore";
+import { formatEventDate } from "@/lib/api";
+import { useSavedRecommendations } from "@/lib/studentSession";
+import { EventDetailsDialog, type EventDetails } from "./EventDetailsDialog";
 
 gsap.registerPlugin(InertiaPlugin);
 
-function formatEventDate(dateStr: string) {
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
+type EventItem = {
+  id: string;
+  title: string;
+  orgName: string;
+  startDate: string;
+  date: string;
+  time: string | null;
+  location: string;
+};
 
 export default function SavedEventsPage() {
   const rootRef = useRef<HTMLDivElement>(null);
-  const { events, remove } = useSavedEvents();
   const [showScrollArrow, setShowScrollArrow] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<SavedEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventDetails | null>(null);
+  const recommendations = useSavedRecommendations();
+
+  // Every event from the student's recommended organizations, soonest first.
+  const events = useMemo<EventItem[]>(
+    () =>
+      (recommendations ?? [])
+        .flatMap((rec) =>
+          rec.events.map((event) => ({
+            id: event.id,
+            title: event.title,
+            orgName: rec.organization.name,
+            startDate: event.start_date,
+            date: formatEventDate(event.start_date),
+            time: event.start_time,
+            location: event.location ?? "Location TBA",
+          }))
+        )
+        .sort((a, b) => a.startDate.localeCompare(b.startDate)),
+    [recommendations]
+  );
 
   // Hover inertia effect adapted from https://madewithgsap.com/effects/free-tutorial001
   useEffect(() => {
@@ -78,7 +101,8 @@ export default function SavedEventsPage() {
     cleanups.push(() => root.removeEventListener("mousemove", handleMouseMove));
 
     return () => cleanups.forEach((fn) => fn());
-  }, [events.length]);
+    // Events arrive after the first render, so re-attach once the cards exist.
+  }, [events]);
 
   // Show a scroll arrow only while there's more content below the fold.
   useEffect(() => {
@@ -96,7 +120,7 @@ export default function SavedEventsPage() {
       window.removeEventListener("scroll", checkScroll);
       window.removeEventListener("resize", checkScroll);
     };
-  }, [events.length]);
+  }, [events]);
 
   function scrollMore() {
     window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
@@ -111,50 +135,54 @@ export default function SavedEventsPage() {
           Saved Events
         </h1>
 
-        {events.length === 0 ? (
-          <p className="text-sm text-[#8C8785]">
-            You haven&apos;t saved any events yet. Tap the + on an event from
-            your home page to save it here.
-          </p>
-        ) : (
+        {recommendations === null && (
+          <EmptyState
+            message="Answer a few questions to get matched with organizations and their events."
+            href="/majClass"
+            linkLabel="Get started"
+          />
+        )}
+
+        {recommendations && events.length === 0 && (
+          <EmptyState
+            message="Your matched organizations haven't posted any events yet."
+            href="/recommendations"
+            linkLabel="Back to your matches"
+          />
+        )}
+
+        {events.length > 0 && (
           <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {events.map((event) => (
-              <div
+              <button
                 key={event.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedEvent(event)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSelectedEvent(event);
-                  }
-                }}
-                className="event-card group relative flex aspect-square cursor-pointer flex-col justify-between rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] p-4 text-left transition-colors hover:border-[#C8102E]"
+                type="button"
+                onClick={() =>
+                  setSelectedEvent({
+                    title: event.title,
+                    orgName: event.orgName,
+                    startDate: event.startDate,
+                    time: event.time,
+                    location: event.location,
+                  })
+                }
+                className="event-card relative flex aspect-square cursor-pointer flex-col justify-between rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] p-4 text-left transition-colors hover:border-[#C8102E]"
               >
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    remove(event.id);
-                  }}
-                  title="Remove from saved events"
-                  className="absolute top-3 right-3 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-[#2E2E2E] text-[#8C8785] transition-colors hover:bg-[#C8102E] hover:text-white"
-                >
-                  <X className="h-3 w-3" strokeWidth={3} />
-                </button>
                 <div>
                   <p className="text-sm font-semibold text-[#F2F0EE]">
                     {event.title}
                   </p>
                   <p className="mt-1 text-xs text-[#8C8785]">
-                    {event.org} · {event.location}
+                    {event.orgName}
+                  </p>
+                  <p className="mt-1 text-xs text-[#8C8785]">
+                    {event.location}
                   </p>
                 </div>
                 <p className="text-xs text-[#8C8785]">
-                  {formatEventDate(event.date)} · {event.time}
+                  {event.time ? `${event.date} · ${event.time}` : event.date}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -181,6 +209,28 @@ export default function SavedEventsPage() {
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
       />
+    </div>
+  );
+}
+
+function EmptyState({
+  message,
+  href,
+  linkLabel,
+}: {
+  message: string;
+  href: string;
+  linkLabel: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <p className="text-[#8C8785]">{message}</p>
+      <Link
+        href={href}
+        className="rounded-full bg-[#C8102E] px-6 py-3 text-white transition-colors hover:bg-[#a90d26]"
+      >
+        {linkLabel}
+      </Link>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Fade } from "@/components/effects/Fade";
 import { ChainCover } from "@/components/effects/ChainCover";
 import { Dropdown } from "@/components/Dropdown";
 import { StepIndicator } from "@/components/StepIndicator";
+import { saveProfileAnswers } from "@/lib/studentSession";
 
 const MAJORS = [
   "Computer Science",
@@ -70,6 +71,16 @@ export default function MajClassPage() {
   const [ethnicity, setEthnicity] = useState("");
   const [transitioning, setTransitioning] = useState(false);
 
+  // The recommendations API requires a major; class and ethnicity are optional.
+  function handleNext() {
+    saveProfileAnswers({
+      major,
+      class_year: classification || null,
+      ethnicity: ethnicity && ethnicity !== "Prefer not to say" ? ethnicity : null,
+    });
+    setTransitioning(true);
+  }
+
   return (
     <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-orange-200 px-6">
       <Fade onComplete={() => setRevealed(true)} />
@@ -125,11 +136,12 @@ export default function MajClassPage() {
 
           <motion.button
             type="button"
-            onClick={() => setTransitioning(true)}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.96 }}
+            onClick={handleNext}
+            disabled={!major}
+            whileHover={major ? { scale: 1.08 } : undefined}
+            whileTap={major ? { scale: 0.96 } : undefined}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50"
+            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
             <svg

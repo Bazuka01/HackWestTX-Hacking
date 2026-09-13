@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { ChainCover } from "@/components/effects/ChainCover";
 import { ChainFall } from "@/components/effects/ChainFall";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Checkbox } from "@/components/Checkbox";
+import { saveProfileAnswers } from "@/lib/studentSession";
 
 const HOBBIES = [
   "Academics",
@@ -53,6 +55,7 @@ export default function InterestChecklistPage() {
   const router = useRouter();
   const [revealed, setRevealed] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [transitioning, setTransitioning] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,11 +80,21 @@ export default function InterestChecklistPage() {
     });
   }
 
+  // The checklist mixes interests and hobbies, so send the picks as hobbies.
+  function handleNext() {
+    saveProfileAnswers({ hobbies: selected, interests: [] });
+    setTransitioning(true);
+  }
+
   const words = HEADING.split(" ");
+  const canContinue = selected.length > 0;
 
   return (
     <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-orange-200 px-6 py-16">
       <ChainFall onComplete={() => setRevealed(true)} />
+      {transitioning && (
+        <ChainCover onComplete={() => router.push("/recommendations")} />
+      )}
 
       <div className="flex w-full max-w-3xl flex-col items-center gap-10">
         <div className="flex flex-col items-center gap-3 text-center">
@@ -159,10 +172,12 @@ export default function InterestChecklistPage() {
 
           <motion.button
             type="button"
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.96 }}
+            onClick={handleNext}
+            disabled={!canContinue}
+            whileHover={canContinue ? { scale: 1.08 } : undefined}
+            whileTap={canContinue ? { scale: 0.96 } : undefined}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50"
+            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
             <svg
