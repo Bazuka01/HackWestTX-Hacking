@@ -6,46 +6,29 @@ import { AnimatePresence, motion } from "motion/react";
 import gsap from "gsap";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { ChevronDown } from "lucide-react";
+import { calendarEntry } from "@/lib/calendarLinks";
 import { DashboardNav } from "@/components/DashboardNav";
-import { unsaveEvent } from "@/app/actions";
-import { formatEventDate, type SavedEvent } from "@/lib/api";
 import {
   EventDetailsDialog,
   type EventDetails,
 } from "@/components/EventDetailsDialog";
+import { useLocale, useT } from "@/components/LanguageProvider";
+import { unsaveEvent } from "@/app/actions";
+import { formatEventDate, type SavedEvent } from "@/lib/api";
 
 gsap.registerPlugin(InertiaPlugin);
 
-type EventItem = {
-  id: string;
-  title: string;
-  orgName: string;
-  startDate: string;
-  date: string;
-  time: string | null;
-  location: string;
-};
-
 // The events saved to the student's account, soonest first.
 export function SavedEventsView({ savedEvents }: { savedEvents: SavedEvent[] }) {
+  const t = useT();
+  const locale = useLocale();
   const rootRef = useRef<HTMLDivElement>(null);
   const [showScrollArrow, setShowScrollArrow] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventDetails | null>(null);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
 
-  const events = useMemo<EventItem[]>(
-    () =>
-      savedEvents
-        .filter((event) => !removedIds.has(event.id))
-        .map((event) => ({
-          id: event.id,
-          title: event.title,
-          orgName: event.org_name,
-          startDate: event.start_date,
-          date: formatEventDate(event.start_date),
-          time: event.start_time,
-          location: event.location ?? "Location TBA",
-        })),
+  const events = useMemo(
+    () => savedEvents.filter((event) => !removedIds.has(event.id)),
     [savedEvents, removedIds]
   );
 
@@ -149,51 +132,45 @@ export function SavedEventsView({ savedEvents }: { savedEvents: SavedEvent[] }) 
 
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 px-6 pt-28 pb-16">
         <h1 className="font-heading text-3xl font-semibold tracking-tight text-[#DC143C]">
-          Saved Events
+          {t.saved.title}
         </h1>
 
         {events.length === 0 && (
           <EmptyState
-            message="You haven't saved any events yet. Tap + on an event from your home page to keep it here."
+            message={t.saved.empty}
             href="/homePage"
-            linkLabel="Find events"
+            linkLabel={t.saved.findEvents}
           />
         )}
 
         {events.length > 0 && (
           <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {events.map((event) => (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() =>
-                  setSelectedEvent({
-                    id: event.id,
-                    title: event.title,
-                    orgName: event.orgName,
-                    startDate: event.startDate,
-                    time: event.time,
-                    location: event.location,
-                  })
-                }
-                className="event-card relative flex aspect-square cursor-pointer flex-col justify-between rounded-2xl border border-[#2E2E2E] bg-[#242424] p-4 text-left transition-colors hover:border-[#DC143C]"
-              >
-                <div>
-                  <p className="font-heading text-sm font-semibold text-white underline decoration-[#DC143C] underline-offset-2">
-                    {event.title}
+            {events.map((event) => {
+              const date = formatEventDate(event.start_date, locale);
+              return (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => setSelectedEvent(calendarEntry(event, event.org_name))}
+                  className="event-card relative flex aspect-square cursor-pointer flex-col justify-between rounded-2xl border border-[#2E2E2E] bg-[#242424] p-4 text-left transition-colors hover:border-[#DC143C]"
+                >
+                  <div>
+                    <p className="font-heading text-sm font-semibold text-white underline decoration-[#DC143C] underline-offset-2">
+                      {event.title}
+                    </p>
+                    <p className="mt-1 text-xs text-[#8C8785]">
+                      {event.org_name}
+                    </p>
+                    <p className="mt-1 text-xs text-[#8C8785]">
+                      {event.location ?? t.common.locationTba}
+                    </p>
+                  </div>
+                  <p className="text-xs text-[#8C8785]">
+                    {event.start_time ? `${date} · ${event.start_time}` : date}
                   </p>
-                  <p className="mt-1 text-xs text-[#8C8785]">
-                    {event.orgName}
-                  </p>
-                  <p className="mt-1 text-xs text-[#8C8785]">
-                    {event.location}
-                  </p>
-                </div>
-                <p className="text-xs text-[#8C8785]">
-                  {event.time ? `${event.date} · ${event.time}` : event.date}
-                </p>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

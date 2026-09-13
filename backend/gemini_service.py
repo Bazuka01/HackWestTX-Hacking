@@ -18,7 +18,9 @@ if not api_key:
 client = genai.Client(api_key=api_key)
 
 
-def recommend_orgs(student_profile, organizations):
+# language is the name of the language the explanations are written in,
+# e.g. "Spanish", matching the language the student chose in the app.
+def recommend_orgs(student_profile, organizations, language="English"):
     # Combine the student's answers and organizations into one prompt.
     prompt = f"""
     Select organizations for this student.
@@ -43,6 +45,7 @@ def recommend_orgs(student_profile, organizations):
     The student reads these explanations, so write them to the student
     using "you" and "your", for example: "This club fits your interest in
     robotics." Never refer to them as "the student".
+    Write the explanations in {language}. Keep organization names as they are.
 
     Student profile:
     {json.dumps(student_profile)}

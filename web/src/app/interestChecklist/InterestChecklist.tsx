@@ -11,57 +11,20 @@ import {
   useScroll,
   type MotionValue,
 } from "motion/react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { ChainCover } from "@/components/effects/ChainCover";
 import { ChainFall } from "@/components/effects/ChainFall";
+import { useT } from "@/components/LanguageProvider";
 import { ScrollProgressRail } from "@/components/ScrollProgressRail";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Checkbox } from "@/components/Checkbox";
-import { AmbientBackground } from "@/components/AmbientBackground";
 import { saveProfile } from "@/app/actions";
 import type { StudentProfile } from "@/lib/api";
+import { INTERESTS } from "@/lib/options";
 import { clearProfileDraft, loadProfileDraft } from "@/lib/profileDraft";
 import connectXLogo from "@/components/icons/connectx-logo.png";
 
-const HOBBIES = [
-  "Academics",
-  "Agriculture",
-  "Animals",
-  "Arts",
-  "Backpacking",
-  "Business",
-  "Camping",
-  "Community Service",
-  "Culture",
-  "Engineering",
-  "Entrepreneurship",
-  "Environment",
-  "Esports",
-  "Finance",
-  "Fitness",
-  "Gaming",
-  "Gym",
-  "Health",
-  "Hiking",
-  "Identity",
-  "Inclusion",
-  "Medicine",
-  "Mentorship",
-  "Music",
-  "Outdoors",
-  "Performance",
-  "Powerlifting",
-  "Research",
-  "Singing",
-  "STEM",
-  "Technology",
-  "Video Games",
-  "Volunteering",
-  "Weightlifting",
-  "Wellness",
-];
-
 const MAX_SELECTIONS = 5;
-const HEADING = "What is your taste?";
 const EASE = [0.76, 0, 0.24, 1] as const;
 
 // Edge-fade mask driven by horizontal scroll progress, adapted from
@@ -111,10 +74,11 @@ export function InterestChecklist({
   savedProfile: StudentProfile | null;
 }) {
   const router = useRouter();
+  const t = useT();
   const [revealed, setRevealed] = useState(false);
   const [selected, setSelected] = useState<string[]>(() =>
     (savedProfile?.hobbies ?? [])
-      .filter((hobby) => HOBBIES.includes(hobby))
+      .filter((hobby) => (INTERESTS as readonly string[]).includes(hobby))
       .slice(0, MAX_SELECTIONS)
   );
   const [transitioning, setTransitioning] = useState(false);
@@ -147,7 +111,8 @@ export function InterestChecklist({
   }
 
   // Save both steps' answers to the account. The checklist mixes interests
-  // and hobbies, so the picks are sent as hobbies.
+  // and hobbies, so the picks are sent as hobbies (in English, since they're
+  // matched against organization tags).
   async function handleNext() {
     const stepOne = loadProfileDraft() ?? savedProfile;
     if (!stepOne?.major) {
@@ -173,7 +138,7 @@ export function InterestChecklist({
     }
   }
 
-  const words = HEADING.split(" ");
+  const words = t.onboarding.tasteHeading.split(" ");
   const canContinue = selected.length > 0 && !saving;
 
   return (
@@ -215,7 +180,7 @@ export function InterestChecklist({
             animate={revealed ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            Select your top five interest/hobbies.
+            {t.onboarding.tastePrompt}
           </motion.p>
         </div>
 
@@ -252,15 +217,15 @@ export function InterestChecklist({
             className="w-full overflow-x-auto overflow-y-hidden py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             <div className="grid w-max grid-flow-col grid-rows-4 gap-3">
-              {HOBBIES.map((hobby, i) => (
+              {INTERESTS.map((hobby, i) => (
                 <motion.div
                   key={hobby}
                   initial={{ opacity: 0, x: -24 }}
                   animate={revealed ? { opacity: 1, x: 0 } : { opacity: 0, x: -24 }}
-                  transition={{ duration: 0.4, delay: 0.6 + i * 0.03, ease: "easeOut" }}
+                  transition={{ duration: 0.4, delay: 0.6 + i * 0.02, ease: "easeOut" }}
                 >
                   <Checkbox
-                    label={hobby}
+                    label={t.options.interests[hobby]}
                     checked={selected.includes(hobby)}
                     disabled={
                       !selected.includes(hobby) && selected.length >= MAX_SELECTIONS
@@ -299,7 +264,7 @@ export function InterestChecklist({
             >
               <path d="M19 12H5M11 6l-6 6 6 6" />
             </svg>
-            Back
+            {t.common.back}
           </motion.button>
 
           <motion.button
@@ -311,7 +276,7 @@ export function InterestChecklist({
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
             className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-black px-6 py-3 text-[#DC143C] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? "Saving…" : "Next"}
+            {saving ? t.common.saving : t.common.next}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -326,9 +291,7 @@ export function InterestChecklist({
         </div>
 
         {saveError && (
-          <p className="-mt-6 text-sm text-[#EF4444]">
-            We couldn&apos;t save your answers. Please try again.
-          </p>
+          <p className="-mt-6 text-sm text-[#EF4444]">{t.onboarding.saveError}</p>
         )}
 
         <StepIndicator active={2} />

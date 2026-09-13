@@ -40,10 +40,13 @@ export type OrgEvent = {
   source_posted_at: string | null;
 };
 
-// An organization Gemini picked for the student, with its upcoming events.
+// An organization on the student's home page, with its upcoming events.
 export type Match = {
   org_id: string;
-  reason: string;
+  // Gemini's explanation; null for organizations added from Browse.
+  reason: string | null;
+  // Kept organizations stay when the student gets new picks.
+  kept: boolean;
   organization: Organization;
   events: OrgEvent[];
 };
@@ -51,6 +54,8 @@ export type Match = {
 export type Matches = {
   recommendations: Match[];
   suggestions: Match[];
+  // Organizations the student added from Browse (always kept).
+  added: Match[];
 };
 
 export type SavedEvent = OrgEvent & { org_name: string };
@@ -61,14 +66,27 @@ export type Dashboard = Matches & {
   saved_events: SavedEvent[];
 };
 
-// "2026-09-13" -> "Sep 13". Built from the date parts so the day never
-// shifts with the viewer's time zone.
-export function formatEventDate(isoDate: string) {
+export type OrganizationWithEvents = Organization & { events: OrgEvent[] };
+
+// GET /users/me/orgs
+export type BrowseData = {
+  orgs: OrganizationWithEvents[];
+  matched_org_ids: string[];
+  // On the home page for good: kept matches and added organizations.
+  kept_org_ids: string[];
+  hidden_org_ids: string[];
+  saved_event_ids: string[];
+};
+
+// "2026-09-13" -> "Sep 13" (or "13 sept" in French). Built from the date
+// parts so the day never shifts with the viewer's time zone.
+export function formatEventDate(
+  isoDate: string,
+  locale = "en-US",
+  options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
+) {
   const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return new Date(year, month - 1, day).toLocaleDateString(locale, options);
 }
 
 export function instagramUrl(username: string) {

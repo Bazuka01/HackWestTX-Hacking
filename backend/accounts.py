@@ -1,6 +1,7 @@
 import os
 import secrets
 from pathlib import Path
+from typing import Literal
 from urllib.parse import unquote
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -15,6 +16,7 @@ from database import (
     fetch_orgs,
 )
 from gemini_service import recommend_orgs
+from matching import candidate_orgs
 from models import StudentProfile
 
 # Load the key the Next.js server uses to call these endpoints.
@@ -87,18 +89,76 @@ ON CONFLICT (user_id) DO UPDATE SET
     updated_at = now()
 """
 
+# Organizations marked "Not interested" stay stored but are left out, so
+# showing them again brings the match back.
 SELECT_MATCHES = """
-SELECT kind, org_id, reason
-FROM user_matches
-WHERE user_id = %s
+SELECT kind, org_id, reason, kept
+FROM user_matches m
+WHERE m.user_id = %(user_id)s
+  AND NOT EXISTS (
+    SELECT 1 FROM hidden_orgs h WHERE h.user_id = m.user_id AND h.org_id = m.org_id
+  )
 ORDER BY kind, rank
 """
 
-DELETE_MATCHES = "DELETE FROM user_matches WHERE user_id = %s"
+# Every stored row, hidden or not, for deciding what new picks replace.
+SELECT_MATCH_ROWS = "SELECT org_id, kind, rank, kept FROM user_matches WHERE user_id = %s"
 
+# "Keep" a match, or "Add" an organization from Browse to the home page.
+KEEP_ORG = """
+INSERT INTO user_matches (user_id, org_id, kind, rank, reason, kept)
+VALUES (
+    %(user_id)s,
+    %(org_id)s,
+    'added',
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM user_matches WHERE user_id = %(user_id)s AND kind = 'added'),
+    NULL,
+    true
+)
+ON CONFLICT (user_id, org_id) DO UPDATE SET kept = true
+"""
+
+# Un-keeping removes an added organization from the home page; a Gemini
+# match stays until the next new picks.
+DELETE_ADDED_ORG = "DELETE FROM user_matches WHERE user_id = %s AND org_id = %s AND kind = 'added'"
+
+UNKEEP_ORG = "UPDATE user_matches SET kept = false WHERE user_id = %s AND org_id = %s"
+
+SELECT_HIDDEN_ORG_IDS = "SELECT org_id FROM hidden_orgs WHERE user_id = %s"
+
+SELECT_ORG = "SELECT 1 FROM orgs WHERE id = %s"
+
+HIDE_ORG = """
+INSERT INTO hidden_orgs (user_id, org_id)
+VALUES (%s, %s)
+ON CONFLICT DO NOTHING
+"""
+
+UNHIDE_ORG = "DELETE FROM hidden_orgs WHERE user_id = %s AND org_id = %s"
+
+SELECT_ALL_ORGS = f"""
+SELECT {ORG_FIELDS}
+FROM orgs o
+ORDER BY o.name
+"""
+
+SELECT_ALL_UPCOMING_EVENTS = f"""
+SELECT {EVENT_FIELDS}
+FROM events e
+WHERE {UPCOMING}
+ORDER BY e.start_date, e.id
+"""
+
+SELECT_SAVED_EVENT_IDS = "SELECT event_id FROM saved_events WHERE user_id = %s"
+
+# Kept and added organizations survive new picks and changed answers.
+DELETE_UNKEPT_MATCHES = "DELETE FROM user_matches WHERE user_id = %s AND NOT kept"
+
+# Skip organizations kept by a request that finished in the meantime.
 INSERT_MATCHES = """
 INSERT INTO user_matches (user_id, org_id, kind, rank, reason)
 VALUES %s
+ON CONFLICT (user_id, org_id) DO NOTHING
 """
 
 SELECT_ORGS_BY_ID = f"""
@@ -144,12 +204,13 @@ def read_profile(cursor, user_id):
     return dict(row) if row else None
 
 
-# The saved matches, each with its organization's details and upcoming events.
+# The home page organizations, grouped as recommendations, suggestions, and
+# ones added from Browse, each with its details and upcoming events.
 def read_matches(cursor, user_id):
-    cursor.execute(SELECT_MATCHES, (user_id,))
+    cursor.execute(SELECT_MATCHES, {"user_id": user_id})
     rows = [dict(row) for row in cursor.fetchall()]
     if not rows:
-        return {"recommendations": [], "suggestions": []}
+        return {"recommendations": [], "suggestions": [], "added": []}
 
     org_ids = [row["org_id"] for row in rows]
     cursor.execute(SELECT_ORGS_BY_ID, (org_ids,))
@@ -157,16 +218,19 @@ def read_matches(cursor, user_id):
     cursor.execute(SELECT_UPCOMING_EVENTS, (org_ids,))
     events = [dict(event) for event in cursor.fetchall()]
 
-    matches = [{"org_id": row["org_id"], "reason": row["reason"]} for row in rows]
+    matches = [
+        {"org_id": row["org_id"], "reason": row["reason"], "kept": row["kept"]}
+        for row in rows
+    ]
     attach_details(matches, orgs_by_id, events)
 
+    def of_kind(kind):
+        return [match for match, row in zip(matches, rows) if row["kind"] == kind]
+
     return {
-        "recommendations": [
-            match for match, row in zip(matches, rows) if row["kind"] == "recommendation"
-        ],
-        "suggestions": [
-            match for match, row in zip(matches, rows) if row["kind"] == "suggestion"
-        ],
+        "recommendations": of_kind("recommendation"),
+        "suggestions": of_kind("suggestion"),
+        "added": of_kind("added"),
     }
 
 
@@ -177,8 +241,8 @@ def get_profile(user: User = Depends(current_user)):
         return {"profile": read_profile(cursor, user.id)}
 
 
-# Save the onboarding answers. Changed answers clear the old matches, so the
-# next POST /users/me/matches asks Gemini again.
+# Save the onboarding answers. Changed answers clear the matches that weren't
+# kept, so the next POST /users/me/matches asks Gemini for new ones.
 @router.put("/profile")
 def save_profile(profile: StudentProfile, user: User = Depends(current_user)):
     answers = profile.model_dump()
@@ -187,39 +251,103 @@ def save_profile(profile: StudentProfile, user: User = Depends(current_user)):
         upsert_user(cursor, user)
         if read_profile(cursor, user.id) != answers:
             cursor.execute(UPSERT_PROFILE, {"user_id": user.id, **answers})
-            cursor.execute(DELETE_MATCHES, (user.id,))
+            cursor.execute(DELETE_UNKEPT_MATCHES, (user.id,))
 
     return {"profile": answers}
 
 
-# Return the saved matches, asking Gemini for new ones only if there are none.
+def read_ids(cursor, query, user_id):
+    cursor.execute(query, (user_id,))
+    return [next(iter(row.values())) for row in cursor.fetchall()]
+
+
+# The languages the frontend offers, and their names for the Gemini prompt.
+LANGUAGE_NAMES = {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "hi": "Hindi",
+    "pt": "Portuguese",
+}
+
+
+class MatchesRequest(BaseModel):
+    # True asks Gemini for different organizations than the current matches.
+    refresh: bool = False
+    # The language the reasons are written in.
+    language: Literal["en", "es", "fr", "hi", "pt"] = "en"
+
+
+# Slots on the home page for Gemini's picks.
+MAX_RECOMMENDATIONS = 3
+MAX_SUGGESTIONS = 3
+
+
+# Return the saved matches, asking Gemini for new ones if there aren't enough
+# or the student asked for new picks. Kept organizations never change: new
+# picks only fill the other slots, so kept tiles stay where they are.
 @router.post("/matches")
-def get_or_create_matches(user: User = Depends(current_user)):
+def get_or_create_matches(
+    request: MatchesRequest | None = None, user: User = Depends(current_user)
+):
+    request = request or MatchesRequest()
+
     with connect() as cursor:
         profile = read_profile(cursor, user.id)
         matches = read_matches(cursor, user.id)
+        hidden_ids = set(read_ids(cursor, SELECT_HIDDEN_ORG_IDS, user.id))
+        cursor.execute(SELECT_MATCH_ROWS, (user.id,))
+        stored = [dict(row) for row in cursor.fetchall()]
 
     if profile is None:
         raise HTTPException(
             status_code=409, detail="Save your profile before requesting matches."
         )
 
-    if matches["recommendations"]:
+    # Existing matches are enough unless all recommendations are hidden or
+    # changed answers cleared the ones that weren't kept.
+    stored_recommendations = [row for row in stored if row["kind"] == "recommendation"]
+    if (
+        not request.refresh
+        and matches["recommendations"]
+        and len(stored_recommendations) >= MAX_RECOMMENDATIONS
+    ):
         return matches
 
-    # Gemini takes a few seconds, so call it without holding a connection.
-    result = recommend_orgs(profile, fetch_orgs())
-    rows = [
-        (user.id, item["org_id"], kind, rank, item["reason"])
-        for kind, key in (("recommendation", "recommendations"), ("suggestion", "suggestions"))
-        for rank, item in enumerate(result[key], start=1)
-    ]
+    kept = [row for row in stored if row["kept"]]
+
+    def free_ranks(kind, slots):
+        taken = {row["rank"] for row in kept if row["kind"] == kind}
+        return [rank for rank in range(1, slots + 1) if rank not in taken]
+
+    recommendation_ranks = free_ranks("recommendation", MAX_RECOMMENDATIONS)
+    suggestion_ranks = free_ranks("suggestion", MAX_SUGGESTIONS)
+
+    rows = []
+    if recommendation_ranks or suggestion_ranks:
+        # Leave out hidden and kept organizations, plus the current picks when
+        # asking for new ones.
+        exclude_ids = hidden_ids | {row["org_id"] for row in kept}
+        if request.refresh:
+            exclude_ids |= {row["org_id"] for row in stored}
+        candidates = candidate_orgs(profile, fetch_orgs(), exclude_ids)
+
+        # Gemini takes a few seconds, so call it without holding a connection.
+        result = recommend_orgs(profile, candidates, LANGUAGE_NAMES[request.language])
+        rows = [
+            (user.id, item["org_id"], kind, rank, item["reason"])
+            for kind, key, ranks in (
+                ("recommendation", "recommendations", recommendation_ranks),
+                ("suggestion", "suggestions", suggestion_ranks),
+            )
+            for rank, item in zip(ranks, result[key])
+        ]
 
     with connect() as cursor:
         upsert_user(cursor, user)
-        # Replace rather than add, in case another request saved matches meanwhile.
-        cursor.execute(DELETE_MATCHES, (user.id,))
-        execute_values(cursor, INSERT_MATCHES, rows)
+        cursor.execute(DELETE_UNKEPT_MATCHES, (user.id,))
+        if rows:
+            execute_values(cursor, INSERT_MATCHES, rows)
         return read_matches(cursor, user.id)
 
 
@@ -254,3 +382,84 @@ def unsave_event(event_id: str, user: User = Depends(current_user)):
         cursor.execute(UNSAVE_EVENT, (user.id, event_id))
 
     return Response(status_code=204)
+
+
+# "Not interested": leave the organization out of matches and new picks. It
+# also stops being kept, and an added organization leaves the home page.
+@router.put("/hidden-orgs/{org_id}")
+def hide_org(org_id: str, user: User = Depends(current_user)):
+    with connect() as cursor:
+        cursor.execute(SELECT_ORG, (org_id,))
+        if cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Organization not found.")
+
+        upsert_user(cursor, user)
+        cursor.execute(HIDE_ORG, (user.id, org_id))
+        cursor.execute(DELETE_ADDED_ORG, (user.id, org_id))
+        cursor.execute(UNKEEP_ORG, (user.id, org_id))
+
+    return Response(status_code=204)
+
+
+# "Keep" on the home page, or "Add" from Browse: the organization stays on the
+# home page through new picks. Adding a hidden organization shows it again.
+@router.put("/kept-orgs/{org_id}")
+def keep_org(org_id: str, user: User = Depends(current_user)):
+    with connect() as cursor:
+        cursor.execute(SELECT_ORG, (org_id,))
+        if cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Organization not found.")
+
+        upsert_user(cursor, user)
+        cursor.execute(UNHIDE_ORG, (user.id, org_id))
+        cursor.execute(KEEP_ORG, {"user_id": user.id, "org_id": org_id})
+
+    return Response(status_code=204)
+
+
+@router.delete("/kept-orgs/{org_id}")
+def unkeep_org(org_id: str, user: User = Depends(current_user)):
+    with connect() as cursor:
+        cursor.execute(DELETE_ADDED_ORG, (user.id, org_id))
+        cursor.execute(UNKEEP_ORG, (user.id, org_id))
+
+    return Response(status_code=204)
+
+
+@router.delete("/hidden-orgs/{org_id}")
+def unhide_org(org_id: str, user: User = Depends(current_user)):
+    with connect() as cursor:
+        cursor.execute(UNHIDE_ORG, (user.id, org_id))
+
+    return Response(status_code=204)
+
+
+# Every organization with its upcoming events, for browsing and search, plus
+# which ones are the student's matches, hidden, or have saved events.
+@router.get("/orgs")
+def browse_orgs(user: User = Depends(current_user)):
+    with connect() as cursor:
+        cursor.execute(SELECT_ALL_ORGS)
+        orgs = [dict(org) for org in cursor.fetchall()]
+        cursor.execute(SELECT_ALL_UPCOMING_EVENTS)
+        events = [dict(event) for event in cursor.fetchall()]
+        matches = read_matches(cursor, user.id)
+        hidden_ids = read_ids(cursor, SELECT_HIDDEN_ORG_IDS, user.id)
+        saved_ids = read_ids(cursor, SELECT_SAVED_EVENT_IDS, user.id)
+
+    events_by_org = {}
+    for event in events:
+        events_by_org.setdefault(event["org_id"], []).append(event)
+    for org in orgs:
+        org["events"] = events_by_org.get(org["id"], [])
+
+    home_orgs = matches["recommendations"] + matches["suggestions"] + matches["added"]
+    return {
+        "orgs": orgs,
+        "matched_org_ids": [
+            match["org_id"] for match in matches["recommendations"] + matches["suggestions"]
+        ],
+        "kept_org_ids": [match["org_id"] for match in home_orgs if match["kept"]],
+        "hidden_org_ids": hidden_ids,
+        "saved_event_ids": saved_ids,
+    }

@@ -3,10 +3,10 @@
 import { useState, type SubmitEvent } from "react";
 import Image from "next/image";
 import { motion, type Variants } from "motion/react";
-import { Iris } from "@/components/effects/Iris";
 import { AmbientBackground } from "@/components/AmbientBackground";
-import { useLanguage } from "@/components/LanguageProvider";
-import { TRANSLATIONS } from "@/lib/i18n";
+import { Iris } from "@/components/effects/Iris";
+import { useLanguage, useT } from "@/components/LanguageProvider";
+import { AUTH0_LOCALES } from "@/lib/i18n";
 import connectXLogo from "@/components/icons/connectx-logo.png";
 
 type Mode = "signup" | "signin";
@@ -32,9 +32,10 @@ export function SignInForm() {
   const [closing, setClosing] = useState(false);
   const [email, setEmail] = useState("");
   const language = useLanguage();
+  const allText = useT();
 
   const isSignup = mode === "signup";
-  const t = TRANSLATIONS[language];
+  const t = allText.signIn;
 
   function switchMode() {
     setRevealed(false);
@@ -46,17 +47,24 @@ export function SignInForm() {
     setClosing(false);
   }
 
+  // Only the email is asked for here: Auth0's own page collects the password,
+  // so asking for it twice would just make students type it again.
   function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    const target = isSignup ? "signup" : "login";
+    const params = new URLSearchParams({
+      screen_hint: isSignup ? "signup" : "login",
+      login_hint: email,
+      // Show Auth0's page in the language picked here.
+      ui_locales: AUTH0_LOCALES[language],
+      // Go to the home page afterwards; it forwards students who haven't
+      // answered the questions yet to onboarding. Without it, the SDK's
+      // default is "/", which is this same form.
+      returnTo: "/homePage",
+    });
     // Full document navigation: the Auth0 route handler issues a redirect
     // to the hosted login page, which a client-side router push can't follow.
-    // returnTo sends the user to their home page after Auth0 finishes; it
-    // forwards students who haven't answered the questions yet to onboarding.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = `/auth/login?screen_hint=${target}&login_hint=${encodeURIComponent(
-      email
-    )}&returnTo=${encodeURIComponent("/homePage")}`;
+    window.location.href = `/auth/login?${params}`;
   }
 
   return (
@@ -107,6 +115,13 @@ export function SignInForm() {
             />
           </motion.div>
 
+          <motion.p
+            variants={item}
+            className="-mt-1 text-center text-xs text-[#8C8785]"
+          >
+            {t.passwordNextStep}
+          </motion.p>
+
           <motion.button
             type="button"
             variants={item}
@@ -121,7 +136,7 @@ export function SignInForm() {
               type="submit"
               className="w-full cursor-pointer rounded-full bg-black py-3 text-[#DC143C] transition-colors hover:bg-black/80"
             >
-              Continue
+              {allText.common.continue}
             </button>
           </motion.div>
         </motion.form>

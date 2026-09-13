@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from accounts import router as accounts_router
 from database import attach_details, fetch_events, fetch_orgs
 from gemini_service import recommend_orgs
+from matching import candidate_orgs
 from models import StudentProfile
 
 # Create the backend application.
@@ -31,7 +32,8 @@ def home():
 @app.post("/recommendations")
 def get_recommendations(profile: StudentProfile):
     organizations = fetch_orgs()
-    result = recommend_orgs(profile.model_dump(), organizations)
+    answers = profile.model_dump()
+    result = recommend_orgs(answers, candidate_orgs(answers, organizations))
 
     orgs_by_id = {org["id"]: org for org in organizations}
     matches = result["recommendations"] + result["suggestions"]

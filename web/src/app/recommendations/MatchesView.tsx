@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { ChainFall } from "@/components/effects/ChainFall";
 import { Doors } from "@/components/effects/Doors";
-import { AmbientBackground } from "@/components/AmbientBackground";
+import { useT } from "@/components/LanguageProvider";
 import { ScrollProgressRail } from "@/components/ScrollProgressRail";
 import { loadMatches } from "@/app/actions";
-import type { Matches } from "@/lib/api";
-import { matchColors } from "@/lib/matchColors";
 import { OrgTile } from "@/app/homePage/OrgTile";
+import type { Matches } from "@/lib/api";
 
 type LoadState =
   | { status: "loading" }
@@ -33,6 +33,7 @@ function loadMatchesOnce() {
 
 export function MatchesView() {
   const router = useRouter();
+  const t = useT();
   const [revealed, setRevealed] = useState(false);
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -64,8 +65,6 @@ export function MatchesView() {
     setAttempt((n) => n + 1);
   }
 
-  const colors = state.status === "ready" ? matchColors(state.matches) : undefined;
-
   return (
     <div className="relative flex min-h-screen w-full flex-1 justify-center overflow-hidden bg-[#1A1A1A] px-6 py-16">
       <AmbientBackground />
@@ -83,11 +82,9 @@ export function MatchesView() {
       >
         <div className="flex flex-col items-center gap-3 text-center">
           <h1 className="font-heading text-3xl font-extrabold tracking-tight text-[#DC143C]">
-            Your Matches
+            {t.matches.title}
           </h1>
-          <p className="text-[#8C8785]">
-            Organizations picked for your major and interests.
-          </p>
+          <p className="text-[#8C8785]">{t.matches.subtitle}</p>
         </div>
 
         {state.status === "loading" && (
@@ -97,21 +94,19 @@ export function MatchesView() {
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
             />
-            <p className="text-sm text-[#8C8785]">
-              Finding your organizations. This can take a few seconds.
-            </p>
+            <p className="text-sm text-[#8C8785]">{t.matches.loading}</p>
           </div>
         )}
 
         {state.status === "error" && (
           <div className="flex flex-col items-center gap-4 py-12 text-center">
-            <p className="text-white">We couldn&apos;t load your matches.</p>
+            <p className="text-white">{t.matches.loadError}</p>
             <button
               type="button"
               onClick={retry}
               className="cursor-pointer rounded-full bg-black px-6 py-3 text-[#DC143C] transition-colors hover:bg-black/80"
             >
-              Try again
+              {t.common.tryAgain}
             </button>
           </div>
         )}
@@ -127,7 +122,7 @@ export function MatchesView() {
                   animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
                   transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease: EASE }}
                 >
-                  <OrgTile match={match} color={colors?.get(match.org_id)} featured />
+                  <OrgTile match={match} featured />
                 </motion.div>
               ))}
             </div>
@@ -135,7 +130,7 @@ export function MatchesView() {
             {state.matches.suggestions.length > 0 && (
               <div className="flex w-full flex-col gap-4">
                 <h2 className="font-heading text-center text-xl font-semibold text-white">
-                  You might also like
+                  {t.matches.alsoLike}
                 </h2>
                 <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
                   {state.matches.suggestions.map((match, i) => (
@@ -146,7 +141,7 @@ export function MatchesView() {
                       animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
                       transition={{ duration: 0.5, delay: 0.5 + i * 0.1, ease: EASE }}
                     >
-                      <OrgTile match={match} color={colors?.get(match.org_id)} />
+                      <OrgTile match={match} />
                     </motion.div>
                   ))}
                 </div>
@@ -161,7 +156,7 @@ export function MatchesView() {
             onClick={() => setLeavingTo("/majClass")}
             className="cursor-pointer rounded-full bg-black px-6 py-3 text-[#DC143C] transition-colors hover:bg-black/80"
           >
-            Edit answers
+            {t.matches.editAnswers}
           </button>
           {state.status === "ready" && (
             <button
@@ -169,7 +164,7 @@ export function MatchesView() {
               onClick={() => setLeavingTo("/homePage")}
               className="cursor-pointer rounded-full bg-black px-6 py-3 text-[#DC143C] transition-colors hover:bg-black/80"
             >
-              Go to your home page
+              {t.matches.goHome}
             </button>
           )}
         </div>

@@ -2,12 +2,16 @@
 
 import { useMemo, useState, type KeyboardEvent } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useT } from "@/components/LanguageProvider";
+import { foldForSearch } from "@/lib/i18n";
 
 type DropdownProps = {
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: readonly string[];
   placeholder: string;
+  // Translated text to show for a value; the value itself is what's saved.
+  getLabel?: (value: string) => string;
   searchable?: boolean;
   allowCustom?: boolean;
 };
@@ -17,18 +21,20 @@ export function Dropdown({
   onChange,
   options,
   placeholder,
+  getLabel = (option) => option,
   searchable = false,
   allowCustom = false,
 }: DropdownProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [customValue, setCustomValue] = useState("");
 
   const filtered = useMemo(() => {
     if (!searchable || !search.trim()) return options;
-    const q = search.trim().toLowerCase();
-    return options.filter((o) => o.toLowerCase().includes(q));
-  }, [options, search, searchable]);
+    const q = foldForSearch(search.trim());
+    return options.filter((o) => foldForSearch(getLabel(o)).includes(q));
+  }, [options, search, searchable, getLabel]);
 
   function select(v: string) {
     onChange(v);
@@ -58,7 +64,7 @@ export function Dropdown({
           className="flex w-full cursor-pointer items-center justify-between rounded-full border border-[#F3A5A5]/40 bg-black/20 px-6 py-3 text-left text-[#F3A5A5] outline-none transition-colors hover:border-[#F3A5A5]"
         >
           <span className={value ? "text-[#F3A5A5]" : "text-[#F3A5A5]/50"}>
-            {value || placeholder}
+            {value ? getLabel(value) : placeholder}
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +95,7 @@ export function Dropdown({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
-                placeholder="Search..."
+                placeholder={t.dropdown.search}
                 className="w-full rounded-lg border border-[#F3A5A5]/30 px-3 py-2 text-sm text-[#F3A5A5] placeholder:text-[#F3A5A5]/50 outline-none focus:border-[#F3A5A5]"
               />
             </div>
@@ -98,7 +104,7 @@ export function Dropdown({
           <div className="max-h-48 overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <div className="px-4 py-2 text-sm text-[#F3A5A5]/50">
-                No matches
+                {t.dropdown.noMatches}
               </div>
             ) : (
               filtered.map((opt) => (
@@ -107,7 +113,7 @@ export function Dropdown({
                   onSelect={() => select(opt)}
                   className="cursor-pointer px-4 py-2 text-sm text-[#F3A5A5] outline-none data-[highlighted]:bg-[#DC143C]/15"
                 >
-                  {opt}
+                  {getLabel(opt)}
                 </DropdownMenu.Item>
               ))
             )}
@@ -119,7 +125,7 @@ export function Dropdown({
                 value={customValue}
                 onChange={(e) => setCustomValue(e.target.value)}
                 onKeyDown={handleCustomKeyDown}
-                placeholder="Not listed? Type yours and press Enter"
+                placeholder={t.dropdown.customPlaceholder}
                 className="w-full rounded-lg border border-[#F3A5A5]/30 px-3 py-2 text-sm text-[#F3A5A5] placeholder:text-[#F3A5A5]/50 outline-none focus:border-[#F3A5A5]"
               />
             </div>

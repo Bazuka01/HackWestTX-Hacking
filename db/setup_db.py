@@ -71,18 +71,33 @@ CREATE TABLE IF NOT EXISTS student_profiles (
 );
 """
 
-# The organizations Gemini picked for each user: 3 recommendations plus 2-3
-# suggestions, in the order Gemini ranked them. Cleared when the answers change.
+# The organizations on each user's home page: Gemini's 3 recommendations and
+# 2-3 suggestions (in the order Gemini ranked them), plus ones the user added
+# from Browse. Kept organizations stay when the user gets new picks or changes
+# their answers; the rest are replaced.
 CREATE_USER_MATCHES_TABLE = """
 CREATE TABLE IF NOT EXISTS user_matches (
     user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
-    kind TEXT NOT NULL CHECK (kind IN ('recommendation', 'suggestion')),
+    kind TEXT NOT NULL CONSTRAINT user_matches_kind_check
+        CHECK (kind IN ('recommendation', 'suggestion', 'added')),
     rank SMALLINT NOT NULL,
-    reason TEXT NOT NULL,
+    -- Gemini's explanation; empty for organizations the user added.
+    reason TEXT,
+    kept BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, org_id)
 );
+"""
+
+# Bring user_matches tables created before "Keep" and "Add" up to date.
+# On a fresh table these change nothing.
+UPGRADE_USER_MATCHES_TABLE = """
+ALTER TABLE user_matches ADD COLUMN IF NOT EXISTS kept BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE user_matches ALTER COLUMN reason DROP NOT NULL;
+ALTER TABLE user_matches DROP CONSTRAINT IF EXISTS user_matches_kind_check;
+ALTER TABLE user_matches ADD CONSTRAINT user_matches_kind_check
+    CHECK (kind IN ('recommendation', 'suggestion', 'added'));
 """
 
 # Events each user saved.
@@ -92,6 +107,17 @@ CREATE TABLE IF NOT EXISTS saved_events (
     event_id TEXT NOT NULL REFERENCES events (id) ON DELETE CASCADE,
     saved_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, event_id)
+);
+"""
+
+# Organizations each user marked "Not interested". They're left out of the
+# user's matches and of new picks until the user shows them again.
+CREATE_HIDDEN_ORGS_TABLE = """
+CREATE TABLE IF NOT EXISTS hidden_orgs (
+    user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+    hidden_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, org_id)
 );
 """
 
@@ -105,11 +131,13 @@ def create_tables():
             cursor.execute(CREATE_USERS_TABLE)
             cursor.execute(CREATE_STUDENT_PROFILES_TABLE)
             cursor.execute(CREATE_USER_MATCHES_TABLE)
+            cursor.execute(UPGRADE_USER_MATCHES_TABLE)
             cursor.execute(CREATE_SAVED_EVENTS_TABLE)
+            cursor.execute(CREATE_HIDDEN_ORGS_TABLE)
 
     print(
         "Tables 'orgs', 'events', 'users', 'student_profiles', "
-        "'user_matches' and 'saved_events' are ready."
+        "'user_matches', 'saved_events' and 'hidden_orgs' are ready."
     )
 
 

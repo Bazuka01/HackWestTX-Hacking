@@ -3,6 +3,7 @@
 import { useState, type SubmitEvent } from "react";
 import { motion, type Variants } from "motion/react";
 import { Blinds } from "@/components/effects/Blinds";
+import { useT } from "@/components/LanguageProvider";
 
 const container: Variants = {
   hidden: {},
@@ -20,6 +21,8 @@ export default function ForgotPasswordPage() {
   const [revealed, setRevealed] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const allText = useT();
+  const t = allText.forgotPassword;
 
   async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +53,7 @@ export default function ForgotPasswordPage() {
           className="text-3xl font-semibold tracking-tight text-slate-600"
           variants={item}
         >
-          Reset Password
+          {t.title}
         </motion.h1>
 
         {status === "sent" ? (
@@ -58,8 +61,7 @@ export default function ForgotPasswordPage() {
             variants={item}
             className="text-center text-sm text-slate-500"
           >
-            If an account exists for that email, we&apos;ve sent a link to
-            reset your password.
+            {t.sent}
           </motion.p>
         ) : (
           <>
@@ -67,8 +69,7 @@ export default function ForgotPasswordPage() {
               variants={item}
               className="text-center text-sm text-slate-500/70"
             >
-              Enter your email and we&apos;ll send you a link to reset your
-              password.
+              {t.intro}
             </motion.p>
 
             <motion.form
@@ -80,7 +81,7 @@ export default function ForgotPasswordPage() {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="Email"
+                placeholder={allText.signIn.email}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-full border border-slate-500/30 bg-orange-200 px-6 py-3 text-slate-600/85 placeholder:text-slate-500/60 outline-none transition-colors hover:border-slate-500/55 focus:border-slate-600"
@@ -91,13 +92,11 @@ export default function ForgotPasswordPage() {
                 disabled={status === "sending"}
                 className="w-full cursor-pointer rounded-full bg-slate-500 py-3 text-orange-50 transition-colors hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {status === "sending" ? "Sending..." : "Send Reset Link"}
+                {status === "sending" ? t.sending : t.send}
               </button>
 
               {status === "error" && (
-                <p className="text-sm text-red-500">
-                  Something went wrong. Please try again.
-                </p>
+                <p className="text-sm text-red-500">{t.error}</p>
               )}
             </motion.form>
           </>
@@ -108,7 +107,7 @@ export default function ForgotPasswordPage() {
           variants={item}
           className="cursor-pointer text-sm text-slate-500/40 transition-colors duration-300 ease-out hover:text-slate-500"
         >
-          Remember your password? Sign in
+          {t.remember}
         </motion.a>
       </motion.div>
     </div>
