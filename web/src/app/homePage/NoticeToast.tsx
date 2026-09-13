@@ -30,9 +30,9 @@ export function NoticeToast({
       <Toast.Root
         open={open && notice !== null}
         onOpenChange={onOpenChange}
-        className="flex translate-y-2 items-center gap-3 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-6 py-3 opacity-0 shadow-lg transition-all duration-300 data-[state=open]:translate-y-0 data-[state=open]:opacity-100"
+        className="flex translate-y-2 items-center gap-3 rounded-full border border-[#2E2E2E] bg-[#242424] px-6 py-3 opacity-0 shadow-lg transition-all duration-300 data-[state=open]:translate-y-0 data-[state=open]:opacity-100"
       >
-        <Icon className="h-5 w-5 shrink-0 text-[#C8102E]" />
+        <Icon className="h-5 w-5 shrink-0 text-[#DC143C]" />
         <div>
           <Toast.Title className="text-sm font-semibold text-[#F2F0EE]">
             {notice?.title}
@@ -45,7 +45,7 @@ export function NoticeToast({
           <Toast.Action
             altText={notice.action.label}
             onClick={notice.action.onClick}
-            className="ml-2 cursor-pointer rounded-full border border-[#2E2E2E] px-3 py-1 text-xs font-semibold text-[#F2F0EE] transition-colors hover:border-[#C8102E]"
+            className="ml-2 cursor-pointer rounded-full border border-[#2E2E2E] px-3 py-1 text-xs font-semibold text-[#F2F0EE] transition-colors hover:border-[#DC143C]"
           >
             {notice.action.label}
           </Toast.Action>

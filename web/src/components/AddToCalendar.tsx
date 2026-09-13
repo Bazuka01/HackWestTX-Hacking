@@ -10,18 +10,15 @@ import {
 } from "@/lib/calendarLinks";
 
 // A button that offers Google Calendar or an .ics download for one event.
-// iconOnly fits it into small tiles; variant matches the page's theme.
+// iconOnly fits it into small tiles.
 export function AddToCalendar({
   entry,
   iconOnly = false,
-  variant = "dark",
 }: {
   entry: CalendarEntry;
   iconOnly?: boolean;
-  variant?: "dark" | "light";
 }) {
   const t = useT();
-  const dark = variant === "dark";
 
   return (
     <DropdownMenu.Root>
@@ -32,16 +29,8 @@ export function AddToCalendar({
           title={t.event.addToCalendar}
           className={
             iconOnly
-              ? `flex h-7 w-7 cursor-pointer items-center justify-center rounded-full transition-colors ${
-                  dark
-                    ? "bg-[#2E2E2E] text-[#F2F0EE] hover:bg-[#3a3a3a]"
-                    : "bg-slate-500/10 text-slate-600 hover:bg-slate-500/20"
-                }`
-              : `flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border py-2.5 text-sm font-semibold transition-colors ${
-                  dark
-                    ? "border-[#2E2E2E] text-[#F2F0EE] hover:border-[#C8102E]"
-                    : "border-slate-500/30 text-slate-600 hover:border-slate-500"
-                }`
+              ? "flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[#2E2E2E] text-white transition-colors hover:bg-[#3a3a3a]"
+              : "flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#2E2E2E] py-2.5 text-sm font-semibold text-white transition-colors hover:border-[#DC143C]"
           }
         >
           <CalendarPlus className="h-4 w-4" />
@@ -53,9 +42,7 @@ export function AddToCalendar({
         <DropdownMenu.Content
           align="end"
           sideOffset={6}
-          className={`z-50 min-w-[12rem] overflow-hidden rounded-xl border py-1 shadow-lg ${
-            dark ? "border-[#2E2E2E] bg-[#1A1A1A]" : "border-slate-500/10 bg-orange-50"
-          }`}
+          className="z-50 min-w-[12rem] overflow-hidden rounded-xl border border-[#2E2E2E] bg-[#242424] py-1 shadow-lg"
         >
           {[
             {
@@ -67,11 +54,7 @@ export function AddToCalendar({
             <DropdownMenu.Item
               key={item.label}
               onSelect={item.onSelect}
-              className={`cursor-pointer px-4 py-2 text-sm outline-none ${
-                dark
-                  ? "text-[#F2F0EE] data-[highlighted]:bg-[#C8102E]/20"
-                  : "text-slate-600 data-[highlighted]:bg-slate-500/5"
-              }`}
+              className="cursor-pointer px-4 py-2 text-sm text-white outline-none data-[highlighted]:bg-[#DC143C]/20"
             >
               {item.label}
             </DropdownMenu.Item>

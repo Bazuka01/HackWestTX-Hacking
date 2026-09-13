@@ -5,11 +5,13 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import { DashboardNav } from "@/components/DashboardNav";
+import { Doors } from "@/components/effects/Doors";
 import { useT } from "@/components/LanguageProvider";
+import { MotionPathTrail } from "@/components/MotionPathTrail";
+import { ScrollProgressRail } from "@/components/ScrollProgressRail";
 import { getNewPicks, hideOrg, saveEvent, unhideOrg } from "@/app/actions";
 import type { Dashboard } from "@/lib/api";
 import { labelFor } from "@/lib/i18n";
-import { matchColors } from "@/lib/matchColors";
 import { EventTile } from "./EventTile";
 import { NoticeToast, type Notice } from "./NoticeToast";
 import { OrgTile } from "./OrgTile";
@@ -25,8 +27,8 @@ export function HomePage({
 }) {
   const t = useT();
   const { profile } = dashboard;
-  const colors = matchColors(dashboard);
 
+  const [revealed, setRevealed] = useState(false);
   const [savedIds, setSavedIds] = useState(
     () => new Set(dashboard.saved_events.map((event) => event.id))
   );
@@ -137,13 +139,21 @@ export function HomePage({
     .join(" · ");
 
   return (
-    <div className="min-h-screen w-full bg-[#0D0D0D]">
+    <div className="min-h-screen w-full bg-[#1A1A1A]">
+      <Doors variant="in" onComplete={() => setRevealed(true)} />
       <DashboardNav active="home" />
 
-      <div className="mx-auto max-w-5xl px-6 pt-28 pb-16">
+      <motion.div
+        className="relative mx-auto max-w-5xl px-6 pt-28 pb-16"
+        initial={{ opacity: 0, y: 8 }}
+        animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <MotionPathTrail />
+
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="text-2xl font-bold tracking-tight text-[#F2F0EE]">
+            <div className="font-heading text-4xl font-extrabold tracking-tight text-[#DC143C]">
               {t.home.welcome(firstName)}
             </div>
             {summary && (
@@ -152,22 +162,22 @@ export function HomePage({
           </div>
           <Link
             href="/majClass"
-            className="text-sm font-semibold text-[#8C8785] transition-colors hover:text-[#C8102E]"
+            className="text-sm font-semibold text-[#8C8785] transition-colors hover:text-[#DC143C]"
           >
             {t.home.editAnswers}
           </Link>
         </div>
 
-        <section>
+        <section className="relative">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-[#F2F0EE]">
+            <h2 className="font-heading text-lg font-semibold text-white">
               {t.home.topMatches}
             </h2>
             <button
               type="button"
               onClick={handleNewPicks}
               disabled={findingPicks}
-              className="flex cursor-pointer items-center gap-2 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-4 py-2 text-sm font-semibold text-[#F2F0EE] transition-colors hover:border-[#C8102E] disabled:cursor-wait disabled:opacity-70"
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-[#DC143C]/30 bg-black px-4 py-2 text-sm font-semibold text-[#DC143C] transition-colors hover:border-[#DC143C] disabled:cursor-wait disabled:opacity-70"
             >
               <motion.span
                 animate={findingPicks ? { rotate: 360 } : { rotate: 0 }}
@@ -184,16 +194,16 @@ export function HomePage({
           </div>
 
           {picksFailed && (
-            <p className="mb-4 text-sm text-[#C8102E]">{t.home.newPicksError}</p>
+            <p className="mb-4 text-sm text-[#EF4444]">{t.home.newPicksError}</p>
           )}
 
           {recommendations.length === 0 ? (
-            <p className="rounded-lg border border-[#2E2E2E] bg-[#1A1A1A] p-6 text-sm text-[#8C8785]">
+            <p className="rounded-lg border border-[#2E2E2E] bg-black p-6 text-sm text-[#8C8785]">
               {t.home.allHidden}
             </p>
           ) : (
             <div
-              className={`grid grid-cols-1 gap-4 sm:grid-cols-4 sm:grid-rows-2 transition-opacity ${
+              className={`grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:grid-rows-2 ${
                 findingPicks ? "opacity-50" : ""
               }`}
             >
@@ -208,22 +218,22 @@ export function HomePage({
                 >
                   <OrgTile
                     match={match}
-                    color={colors.get(match.org_id)}
                     featured={i === 0}
                     onHide={() => handleHide(match.org_id)}
                   />
                 </div>
               ))}
+              <ScrollProgressRail className="hidden sm:col-start-5 sm:row-start-2 sm:block sm:self-center" />
             </div>
           )}
         </section>
 
         <section className="mt-10">
-          <h2 className="mb-4 text-lg font-semibold text-[#F2F0EE]">
+          <h2 className="font-heading mb-4 text-lg font-semibold text-white">
             {t.home.eventsForYou}
           </h2>
           {events.length === 0 ? (
-            <p className="rounded-lg border border-[#2E2E2E] bg-[#1A1A1A] p-6 text-sm text-[#8C8785]">
+            <p className="rounded-lg border border-[#2E2E2E] bg-black p-6 text-sm text-[#8C8785]">
               {t.home.noEvents}
             </p>
           ) : (
@@ -233,7 +243,6 @@ export function HomePage({
                   <EventTile
                     event={event}
                     orgName={organization.name}
-                    orgColor={colors.get(organization.id)}
                     isSaved={savedIds.has(event.id)}
                     onSave={() => handleSave(event.id)}
                   />
@@ -245,23 +254,19 @@ export function HomePage({
 
         {suggestions.length > 0 && (
           <section className="mt-10">
-            <h2 className="mb-4 text-lg font-semibold text-[#F2F0EE]">
+            <h2 className="font-heading mb-4 text-lg font-semibold text-white">
               {t.home.moreForYou}
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {suggestions.map((match) => (
                 <div key={match.org_id} className="sm:min-h-[174px]">
-                  <OrgTile
-                    match={match}
-                    color={colors.get(match.org_id)}
-                    onHide={() => handleHide(match.org_id)}
-                  />
+                  <OrgTile match={match} onHide={() => handleHide(match.org_id)} />
                 </div>
               ))}
             </div>
           </section>
         )}
-      </div>
+      </motion.div>
 
       <NoticeToast notice={notice} open={toastOpen} onOpenChange={setToastOpen} />
     </div>

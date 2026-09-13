@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, type SubmitEvent } from "react";
-import { AnimatePresence, motion, type Variants } from "motion/react";
-import { Blinds } from "@/components/effects/Blinds";
+import Image from "next/image";
+import { motion, type Variants } from "motion/react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { Iris } from "@/components/effects/Iris";
 import { useLanguage, useT } from "@/components/LanguageProvider";
 import { AUTH0_LOCALES } from "@/lib/i18n";
+import connectXLogo from "@/components/icons/connectx-logo.png";
 
 type Mode = "signup" | "signin";
 
@@ -27,12 +29,23 @@ const item: Variants = {
 export function SignInForm() {
   const [mode, setMode] = useState<Mode>("signup");
   const [revealed, setRevealed] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [email, setEmail] = useState("");
   const language = useLanguage();
   const allText = useT();
 
   const isSignup = mode === "signup";
   const t = allText.signIn;
+
+  function switchMode() {
+    setRevealed(false);
+    setClosing(true);
+  }
+
+  function handleCloseComplete() {
+    setMode((m) => (m === "signup" ? "signin" : "signup"));
+    setClosing(false);
+  }
 
   // Only the email is asked for here: Auth0's own page collects the password,
   // so asking for it twice would just make students type it again.
@@ -55,82 +68,79 @@ export function SignInForm() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-orange-200">
-      <AnimatePresence mode="wait" onExitComplete={() => setRevealed(false)}>
-        <motion.div
-          key={mode}
-          className="relative flex w-full max-w-sm flex-col items-center gap-6 px-8 py-16"
-          variants={container}
-          initial="hidden"
-          animate={revealed ? "show" : "hidden"}
+    <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-[#1A1A1A]">
+      <AmbientBackground />
+
+      <Image
+        src={connectXLogo}
+        alt=""
+        aria-hidden
+        priority
+        className="pointer-events-none absolute top-1/2 right-[8%] w-[480px] max-w-none -translate-y-1/2 rotate-12 opacity-10 select-none"
+      />
+
+      {closing ? (
+        <Iris variant="out" onComplete={handleCloseComplete} />
+      ) : (
+        <Iris key={mode} variant="in" onComplete={() => setRevealed(true)} />
+      )}
+
+      <motion.div
+        className="relative flex w-full max-w-sm flex-col items-center gap-6 px-8 py-16"
+        variants={container}
+        initial="hidden"
+        animate={revealed ? "show" : "hidden"}
+      >
+        <motion.h1
+          className="font-heading text-4xl font-extrabold tracking-tight text-[#EF4444]"
+          variants={item}
         >
-          {isSignup ? (
-            <Blinds onComplete={() => setRevealed(true)} />
-          ) : (
-            <Iris onComplete={() => setRevealed(true)} />
-          )}
+          {isSignup ? t.createAccount : t.signIn}
+        </motion.h1>
 
-          <motion.h1
-            className="text-3xl font-semibold tracking-tight text-slate-600"
+        <motion.form
+          onSubmit={handleSubmit}
+          className="flex w-full flex-col items-center gap-4"
+          variants={fieldGroup}
+        >
+          <motion.div variants={item} className="w-full">
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              placeholder={t.email}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-full border border-[#F3A5A5]/50 bg-black/20 px-6 py-3 text-[#F3A5A5] placeholder:text-[#F3A5A5]/50 outline-none transition-colors hover:border-[#F3A5A5] focus:border-[#F3A5A5]"
+            />
+          </motion.div>
+
+          <motion.p
             variants={item}
+            className="-mt-1 text-center text-xs text-[#8C8785]"
           >
-            {isSignup ? t.createAccount : t.signIn}
-          </motion.h1>
+            {t.passwordNextStep}
+          </motion.p>
 
-          <motion.form
-            onSubmit={handleSubmit}
-            className="flex w-full flex-col items-center gap-4"
-            variants={fieldGroup}
+          <motion.button
+            type="button"
+            variants={item}
+            onClick={switchMode}
+            className="cursor-pointer text-sm text-[#8C8785] transition-colors duration-300 ease-out hover:text-[#F3A5A5]"
           >
-            <motion.div variants={item} className="w-full">
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                placeholder={t.email}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-full border border-slate-500/30 bg-orange-200 px-6 py-3 text-slate-600/85 placeholder:text-slate-500/60 outline-none transition-colors hover:border-slate-500/55 focus:border-slate-600"
-              />
-            </motion.div>
+            {isSignup ? t.haveAccount : t.newHere}
+          </motion.button>
 
-            <motion.p
-              variants={item}
-              className="-mt-1 text-center text-xs text-slate-500/60"
+          <motion.div variants={item} className="w-full">
+            <button
+              type="submit"
+              className="w-full cursor-pointer rounded-full bg-black py-3 text-[#DC143C] transition-colors hover:bg-black/80"
             >
-              {t.passwordNextStep}
-            </motion.p>
-
-            {!isSignup && (
-              <motion.a
-                href="/forgotPassword"
-                variants={item}
-                className="cursor-pointer text-sm text-slate-500/40 transition-colors duration-300 ease-out hover:text-slate-500"
-              >
-                {t.forgotPassword}
-              </motion.a>
-            )}
-
-            <motion.button
-              type="button"
-              variants={item}
-              onClick={() => setMode(isSignup ? "signin" : "signup")}
-              className="cursor-pointer text-sm text-slate-500/40 transition-colors duration-300 ease-out hover:text-slate-500"
-            >
-              {isSignup ? t.haveAccount : t.newHere}
-            </motion.button>
-
-            <motion.div variants={item} className="w-full">
-              <button
-                type="submit"
-                className="w-full cursor-pointer rounded-full bg-slate-500 py-3 text-orange-50 transition-colors hover:bg-slate-600"
-              >
-                {isSignup ? t.createAccount : t.signIn}
-              </button>
-            </motion.div>
-          </motion.form>
-        </motion.div>
-      </AnimatePresence>
+              {allText.common.continue}
+            </button>
+          </motion.div>
+        </motion.form>
+      </motion.div>
     </div>
   );
 }

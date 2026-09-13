@@ -109,17 +109,17 @@ export function BrowseView({ data }: { data: BrowseData }) {
   );
 
   return (
-    <div className="min-h-screen w-full bg-[#0D0D0D]">
+    <div className="min-h-screen w-full bg-[#1A1A1A]">
       <DashboardNav active="browse" />
 
       <div className="mx-auto max-w-5xl px-6 pt-28 pb-16">
-        <h1 className="text-2xl font-bold tracking-tight text-[#F2F0EE]">
+        <h1 className="font-heading text-4xl font-extrabold tracking-tight text-[#DC143C]">
           {t.browse.title}
         </h1>
         <p className="mt-1 text-sm text-[#8C8785]">{t.browse.subtitle(data.orgs.length)}</p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="flex flex-1 items-center gap-2 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-4 py-2.5 focus-within:border-[#C8102E]">
+          <label className="flex flex-1 items-center gap-2 rounded-full border border-[#2E2E2E] bg-[#242424] px-4 py-2.5 focus-within:border-[#DC143C]">
             <Search className="h-4 w-4 shrink-0 text-[#8C8785]" />
             <input
               type="search"
@@ -127,7 +127,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
               onChange={(e) => resetPaging(setQuery)(e.target.value)}
               placeholder={t.browse.searchPlaceholder}
               aria-label={t.browse.searchPlaceholder}
-              className="w-full bg-transparent text-sm text-[#F2F0EE] outline-none placeholder:text-[#8C8785]"
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8C8785]"
             />
           </label>
 
@@ -135,7 +135,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
             value={category}
             onChange={(e) => resetPaging(setCategory)(e.target.value)}
             aria-label={t.browse.allCategories}
-            className="cursor-pointer rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-4 py-2.5 text-sm text-[#F2F0EE] outline-none focus:border-[#C8102E]"
+            className="cursor-pointer rounded-full border border-[#2E2E2E] bg-[#242424] px-4 py-2.5 text-sm text-white outline-none focus:border-[#DC143C]"
           >
             <option value="">{t.browse.allCategories}</option>
             {categoryOptions.map((option) => (
@@ -150,7 +150,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
               type="checkbox"
               checked={showHidden}
               onChange={(e) => resetPaging(setShowHidden)(e.target.checked)}
-              className="h-4 w-4 accent-[#C8102E]"
+              className="h-4 w-4 accent-[#DC143C]"
             />
             {t.browse.showHidden}
           </label>
@@ -161,7 +161,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
         </p>
 
         {results.length === 0 ? (
-          <p className="rounded-lg border border-[#2E2E2E] bg-[#1A1A1A] p-6 text-sm text-[#8C8785]">
+          <p className="rounded-lg border border-[#2E2E2E] bg-black p-6 text-sm text-[#8C8785]">
             {t.browse.noResults}
           </p>
         ) : (
@@ -171,7 +171,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
               return (
                 <article
                   key={org.id}
-                  className={`relative flex flex-col gap-3 rounded-lg border border-[#2E2E2E] bg-[#1A1A1A] p-4 ${
+                  className={`relative flex flex-col gap-3 rounded-lg border border-[#2E2E2E] bg-black p-4 ${
                     hidden ? "opacity-60" : ""
                   }`}
                 >
@@ -179,7 +179,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                     <button
                       type="button"
                       onClick={() => toggle(setHiddenIds, org.id, false, unhideOrg)}
-                      className="absolute top-3 right-3 cursor-pointer rounded-full border border-[#2E2E2E] px-2.5 py-1 text-[11px] font-semibold text-[#F2F0EE] transition-colors hover:border-[#C8102E]"
+                      className="absolute top-3 right-3 cursor-pointer rounded-full border border-[#2E2E2E] px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:border-[#DC143C]"
                     >
                       {t.browse.showAgain}
                     </button>
@@ -189,7 +189,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                       onClick={() => toggle(setHiddenIds, org.id, true, hideOrg)}
                       aria-label={t.common.notInterested}
                       title={t.common.notInterested}
-                      className="absolute top-3 right-3 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[#8C8785] transition-colors hover:bg-[#2E2E2E] hover:text-[#F2F0EE]"
+                      className="absolute top-3 right-3 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[#8C8785] transition-colors hover:bg-[#2E2E2E] hover:text-white"
                     >
                       <EyeOff className="h-4 w-4" />
                     </button>
@@ -198,7 +198,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                   <div className="pr-24">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {matchedIds.has(org.id) && (
-                        <span className="rounded-full bg-[#C8102E] px-2 py-0.5 text-[10px] font-semibold text-white">
+                        <span className="rounded-full bg-[#DC143C] px-2 py-0.5 text-[10px] font-semibold text-white">
                           {t.browse.yourMatch}
                         </span>
                       )}
@@ -208,19 +208,19 @@ export function BrowseView({ data }: { data: BrowseData }) {
                         </span>
                       )}
                       {org.category && (
-                        <span className="text-[11px] text-[#8C8785]">
+                        <span className="text-[11px] font-medium text-[#DC143C]">
                           {labelFor(t.options.categories, org.category)}
                         </span>
                       )}
                     </div>
-                    <h2 className="mt-1 text-[15px] font-semibold text-[#F2F0EE]">
+                    <h2 className="font-heading mt-1 text-[15px] font-semibold text-white">
                       {org.name}
                     </h2>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
                     {org.cultureTag && (
-                      <span className="rounded-full border border-[#C8102E]/40 px-2 py-0.5 text-[11px] text-[#F2F0EE]">
+                      <span className="rounded-full border border-[#DC143C]/40 px-2 py-0.5 text-[11px] text-white">
                         {labelFor(t.options.cultures, org.cultureTag)}
                       </span>
                     )}
@@ -229,7 +229,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                       .map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-full bg-[#2E2E2E] px-2 py-0.5 text-[11px] text-[#F2F0EE]"
+                          className="rounded-full bg-[#2E2E2E] px-2 py-0.5 text-[11px] text-white"
                         >
                           {tagLabel(t, tag)}
                         </span>
@@ -246,7 +246,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                         return (
                           <div key={event.id} className="flex items-center gap-2">
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm text-[#F2F0EE]">{event.title}</p>
+                              <p className="font-heading truncate text-sm text-white underline decoration-[#DC143C] underline-offset-2">{event.title}</p>
                               <p className="text-xs text-[#8C8785]">
                                 {[formatEventDate(event.start_date, locale), event.start_time]
                                   .filter(Boolean)
@@ -264,8 +264,8 @@ export function BrowseView({ data }: { data: BrowseData }) {
                               aria-pressed={saved}
                               className={`flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors ${
                                 saved
-                                  ? "bg-[#2E2E2E] text-[#F2F0EE] hover:bg-[#3a3a3a]"
-                                  : "bg-[#C8102E] text-white hover:bg-[#a90d26]"
+                                  ? "bg-[#2E2E2E] text-white hover:bg-[#3a3a3a]"
+                                  : "bg-[#DC143C] text-white hover:bg-[#a90d26]"
                               }`}
                             >
                               {saved ? (
@@ -285,7 +285,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                       href={instagramUrl(org.instagramUsername)}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-auto flex w-fit items-center gap-0.5 text-xs text-[#8C8785] transition-colors hover:text-[#C8102E]"
+                      className="mt-auto flex w-fit items-center gap-0.5 text-xs text-[#DC143C] transition-colors hover:text-[#a90d26]"
                     >
                       @{org.instagramUsername}
                       <ArrowUpRight className="h-3 w-3" />
@@ -302,7 +302,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
             <button
               type="button"
               onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-              className="cursor-pointer rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-6 py-2.5 text-sm font-semibold text-[#F2F0EE] transition-colors hover:border-[#C8102E]"
+              className="cursor-pointer rounded-full border border-[#DC143C]/30 bg-black px-6 py-2.5 text-sm font-semibold text-[#DC143C] transition-colors hover:border-[#DC143C]"
             >
               {t.browse.showMore}
             </button>

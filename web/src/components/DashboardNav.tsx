@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Bookmark, CalendarDays, LogOut, Search } from "lucide-react";
 import { useT } from "@/components/LanguageProvider";
+import connectXLogo from "@/components/icons/connectx-logo.png";
 
 type ActiveTab = "home" | "browse" | "saved" | "calendar";
 
 function tabClass(isActive: boolean) {
   return `flex items-center rounded px-2 py-2 text-sm font-semibold transition-colors sm:px-3.5 ${
-    isActive ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
+    isActive ? "text-[#DC143C]" : "text-[#8C8785] hover:text-[#DC143C]"
   }`;
 }
 
@@ -23,12 +25,15 @@ export function DashboardNav({ active }: { active: ActiveTab }) {
   ] as const;
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b border-[#2E2E2E] bg-[#1A1A1A] py-4 pr-20 pl-5 sm:grid-cols-3 sm:px-7">
+    <nav className="fixed inset-x-0 top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b border-[#2E2E2E] bg-[#242424] py-4 pr-20 pl-5 sm:grid-cols-3 sm:px-7">
       <Link
         href="/homePage"
-        className="text-xl font-bold tracking-tight text-[#F2F0EE]"
+        className="font-heading flex items-center gap-2 text-xl font-bold tracking-tight text-white"
       >
-        ConnectX
+        <Image src={connectXLogo} alt="" aria-hidden className="h-10 w-10 object-contain" />
+        <span className="hidden sm:inline">
+          Connect<span className="text-[#DC143C]">X</span>
+        </span>
       </Link>
       <div className="flex justify-center gap-1">
         {tabs.map(({ id, href, label, Icon }) => (

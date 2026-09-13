@@ -61,9 +61,9 @@ export function Dropdown({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="flex w-full cursor-pointer items-center justify-between rounded-full border border-slate-500/15 bg-orange-200 px-6 py-3 text-left text-slate-500 outline-none transition-colors hover:border-slate-500/40"
+          className="flex w-full cursor-pointer items-center justify-between rounded-full border border-[#F3A5A5]/40 bg-black/20 px-6 py-3 text-left text-[#F3A5A5] outline-none transition-colors hover:border-[#F3A5A5]"
         >
-          <span className={value ? "text-slate-500" : "text-slate-500/40"}>
+          <span className={value ? "text-[#F3A5A5]" : "text-[#F3A5A5]/50"}>
             {value ? getLabel(value) : placeholder}
           </span>
           <svg
@@ -86,24 +86,24 @@ export function Dropdown({
           align="start"
           sideOffset={8}
           style={{ width: "var(--radix-dropdown-menu-trigger-width)" }}
-          className="z-50 max-h-80 overflow-hidden rounded-2xl border border-slate-500/10 bg-orange-200 shadow-lg"
+          className="z-50 max-h-80 overflow-hidden rounded-2xl border border-[#F3A5A5]/20 bg-[#242424] shadow-lg"
         >
           {searchable && (
-            <div className="border-b border-slate-500/10 p-2">
+            <div className="border-b border-[#F3A5A5]/15 p-2">
               <input
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
                 placeholder={t.dropdown.search}
-                className="w-full rounded-lg border border-slate-500/30 px-3 py-2 text-sm text-slate-600/85 placeholder:text-slate-500/60 outline-none focus:border-slate-600"
+                className="w-full rounded-lg border border-[#F3A5A5]/30 px-3 py-2 text-sm text-[#F3A5A5] placeholder:text-[#F3A5A5]/50 outline-none focus:border-[#F3A5A5]"
               />
             </div>
           )}
 
           <div className="max-h-48 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <div className="px-4 py-2 text-sm text-slate-500/40">
+              <div className="px-4 py-2 text-sm text-[#F3A5A5]/50">
                 {t.dropdown.noMatches}
               </div>
             ) : (
@@ -111,7 +111,7 @@ export function Dropdown({
                 <DropdownMenu.Item
                   key={opt}
                   onSelect={() => select(opt)}
-                  className="cursor-pointer px-4 py-2 text-sm text-slate-500 outline-none data-[highlighted]:bg-slate-500/5"
+                  className="cursor-pointer px-4 py-2 text-sm text-[#F3A5A5] outline-none data-[highlighted]:bg-[#DC143C]/15"
                 >
                   {getLabel(opt)}
                 </DropdownMenu.Item>
@@ -120,13 +120,13 @@ export function Dropdown({
           </div>
 
           {allowCustom && (
-            <div className="border-t border-slate-500/10 p-2">
+            <div className="border-t border-[#F3A5A5]/15 p-2">
               <input
                 value={customValue}
                 onChange={(e) => setCustomValue(e.target.value)}
                 onKeyDown={handleCustomKeyDown}
                 placeholder={t.dropdown.customPlaceholder}
-                className="w-full rounded-lg border border-slate-500/30 px-3 py-2 text-sm text-slate-600/85 placeholder:text-slate-500/60 outline-none focus:border-slate-600"
+                className="w-full rounded-lg border border-[#F3A5A5]/30 px-3 py-2 text-sm text-[#F3A5A5] placeholder:text-[#F3A5A5]/50 outline-none focus:border-[#F3A5A5]"
               />
             </div>
           )}

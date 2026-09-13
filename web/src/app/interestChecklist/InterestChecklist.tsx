@@ -2,19 +2,69 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
+import Image from "next/image";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useScroll,
+  type MotionValue,
+} from "motion/react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { ChainCover } from "@/components/effects/ChainCover";
 import { ChainFall } from "@/components/effects/ChainFall";
+import { useT } from "@/components/LanguageProvider";
+import { ScrollProgressRail } from "@/components/ScrollProgressRail";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Checkbox } from "@/components/Checkbox";
-import { useT } from "@/components/LanguageProvider";
 import { saveProfile } from "@/app/actions";
 import type { StudentProfile } from "@/lib/api";
 import { INTERESTS } from "@/lib/options";
 import { clearProfileDraft, loadProfileDraft } from "@/lib/profileDraft";
+import connectXLogo from "@/components/icons/connectx-logo.png";
 
 const MAX_SELECTIONS = 5;
 const EASE = [0.76, 0, 0.24, 1] as const;
+
+// Edge-fade mask driven by horizontal scroll progress, adapted from
+// https://motion.dev/examples/react-scroll-container
+const LEFT = "0%";
+const RIGHT = "100%";
+const LEFT_INSET = "12%";
+const RIGHT_INSET = "88%";
+const TRANSPARENT = "#0000";
+const OPAQUE = "#000";
+
+function useScrollOverflowMask(scrollXProgress: MotionValue<number>) {
+  const maskImage = useMotionValue(
+    `linear-gradient(90deg, ${OPAQUE}, ${OPAQUE} ${LEFT}, ${OPAQUE} ${RIGHT_INSET}, ${TRANSPARENT})`
+  );
+
+  useMotionValueEvent(scrollXProgress, "change", (value) => {
+    if (value === 0) {
+      animate(
+        maskImage,
+        `linear-gradient(90deg, ${OPAQUE}, ${OPAQUE} ${LEFT}, ${OPAQUE} ${RIGHT_INSET}, ${TRANSPARENT})`
+      );
+    } else if (value === 1) {
+      animate(
+        maskImage,
+        `linear-gradient(90deg, ${TRANSPARENT}, ${OPAQUE} ${LEFT_INSET}, ${OPAQUE} ${RIGHT}, ${OPAQUE})`
+      );
+    } else if (
+      scrollXProgress.getPrevious() === 0 ||
+      scrollXProgress.getPrevious() === 1
+    ) {
+      animate(
+        maskImage,
+        `linear-gradient(90deg, ${TRANSPARENT}, ${OPAQUE} ${LEFT_INSET}, ${OPAQUE} ${RIGHT_INSET}, ${TRANSPARENT})`
+      );
+    }
+  });
+
+  return maskImage;
+}
 
 // savedProfile pre-selects earlier picks and fills in step 1's answers if
 // the student came straight here.
@@ -35,6 +85,8 @@ export function InterestChecklist({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { scrollXProgress } = useScroll({ container: scrollRef });
+  const maskImage = useScrollOverflowMask(scrollXProgress);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -90,15 +142,24 @@ export function InterestChecklist({
   const canContinue = selected.length > 0 && !saving;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-orange-200 px-6 py-16">
+    <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-[#1A1A1A] px-6 py-16">
+      <AmbientBackground />
+      <Image
+        src={connectXLogo}
+        alt=""
+        aria-hidden
+        priority
+        className="pointer-events-none absolute top-1/2 right-[8%] w-[480px] max-w-none -translate-y-1/2 rotate-12 opacity-10 select-none"
+      />
       <ChainFall onComplete={() => setRevealed(true)} />
+      <ScrollProgressRail fixed className="top-1/2 right-6 z-40 -translate-y-1/2" />
       {transitioning && (
         <ChainCover onComplete={() => router.push("/recommendations")} />
       )}
 
-      <div className="flex w-full max-w-3xl flex-col items-center gap-10">
+      <div className="relative flex w-full max-w-3xl flex-col items-center gap-10">
         <div className="flex flex-col items-center gap-3 text-center">
-          <h1 className="flex flex-wrap justify-center gap-x-3 text-3xl font-semibold tracking-tight text-slate-600">
+          <h1 className="font-heading flex flex-wrap justify-center gap-x-3 text-3xl font-extrabold tracking-tight text-[#EF4444]">
             {words.map((word, i) => (
               <span key={i} className="overflow-hidden">
                 <motion.span
@@ -114,7 +175,7 @@ export function InterestChecklist({
           </h1>
 
           <motion.p
-            className="text-slate-500/50"
+            className="text-[#8C8785]"
             initial={{ opacity: 0 }}
             animate={revealed ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
@@ -123,28 +184,64 @@ export function InterestChecklist({
           </motion.p>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="w-full overflow-x-auto overflow-y-hidden py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          <div className="grid w-max grid-flow-col grid-rows-4 gap-3">
-            {INTERESTS.map((hobby, i) => (
-              <motion.div
-                key={hobby}
-                initial={{ opacity: 0, x: -24 }}
-                animate={revealed ? { opacity: 1, x: 0 } : { opacity: 0, x: -24 }}
-                transition={{ duration: 0.4, delay: 0.6 + i * 0.02, ease: "easeOut" }}
-              >
-                <Checkbox
-                  label={t.options.interests[hobby]}
-                  checked={selected.includes(hobby)}
-                  disabled={
-                    !selected.includes(hobby) && selected.length >= MAX_SELECTIONS
-                  }
-                  onChange={() => toggle(hobby)}
-                />
-              </motion.div>
-            ))}
+        <div className="relative w-full">
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            className="absolute -top-9 right-0 -rotate-90"
+          >
+            <circle
+              cx="18"
+              cy="18"
+              r="14"
+              pathLength={1}
+              className="fill-none stroke-[#F3A5A5]/20"
+              strokeWidth={3}
+            />
+            <motion.circle
+              cx="18"
+              cy="18"
+              r="14"
+              pathLength={1}
+              className="fill-none stroke-[#DC143C]"
+              strokeWidth={3}
+              strokeLinecap="round"
+              style={{ pathLength: scrollXProgress }}
+            />
+          </svg>
+
+          <motion.div
+            ref={scrollRef}
+            style={{ maskImage, WebkitMaskImage: maskImage }}
+            className="w-full overflow-x-auto overflow-y-hidden py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="grid w-max grid-flow-col grid-rows-4 gap-3">
+              {INTERESTS.map((hobby, i) => (
+                <motion.div
+                  key={hobby}
+                  initial={{ opacity: 0, x: -24 }}
+                  animate={revealed ? { opacity: 1, x: 0 } : { opacity: 0, x: -24 }}
+                  transition={{ duration: 0.4, delay: 0.6 + i * 0.02, ease: "easeOut" }}
+                >
+                  <Checkbox
+                    label={t.options.interests[hobby]}
+                    checked={selected.includes(hobby)}
+                    disabled={
+                      !selected.includes(hobby) && selected.length >= MAX_SELECTIONS
+                    }
+                    onChange={() => toggle(hobby)}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <div className="relative mt-2 h-1 w-full overflow-hidden rounded-full bg-[#F3A5A5]/15">
+            <motion.div
+              className="h-full origin-left rounded-full bg-[#DC143C]"
+              style={{ scaleX: scrollXProgress }}
+            />
           </div>
         </div>
 
@@ -155,7 +252,7 @@ export function InterestChecklist({
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.96 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50"
+            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-black px-6 py-3 text-[#DC143C]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +274,7 @@ export function InterestChecklist({
             whileHover={canContinue ? { scale: 1.08 } : undefined}
             whileTap={canContinue ? { scale: 0.96 } : undefined}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-black px-6 py-3 text-[#DC143C] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? t.common.saving : t.common.next}
             <svg
@@ -194,7 +291,7 @@ export function InterestChecklist({
         </div>
 
         {saveError && (
-          <p className="-mt-6 text-sm text-red-600">{t.onboarding.saveError}</p>
+          <p className="-mt-6 text-sm text-[#EF4444]">{t.onboarding.saveError}</p>
         )}
 
         <StepIndicator active={2} />
