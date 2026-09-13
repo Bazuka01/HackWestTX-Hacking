@@ -17,9 +17,7 @@ export function DashboardNav({ active }: { active: ActiveTab }) {
         <Link
           href="/savedEvents"
           className={`rounded px-3.5 py-2 text-sm font-semibold transition-colors ${
-            active === "saved"
-              ? "bg-[#C8102E] text-white"
-              : "text-[#8C8785] hover:text-[#C8102E]"
+            active === "saved" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
           }`}
         >
           Saved Events
@@ -27,9 +25,7 @@ export function DashboardNav({ active }: { active: ActiveTab }) {
         <Link
           href="/calendar"
           className={`rounded px-3.5 py-2 text-sm font-semibold transition-colors ${
-            active === "calendar"
-              ? "bg-[#C8102E] text-white"
-              : "text-[#8C8785] hover:text-[#C8102E]"
+            active === "calendar" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
           }`}
         >
           Calendar
