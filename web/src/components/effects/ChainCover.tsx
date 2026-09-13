@@ -31,8 +31,12 @@ export function ChainCover({ onComplete }: { onComplete?: () => void }) {
       ease: "power1.out",
     });
 
-    const burstTween = gsap.to(pieces, {
-      duration: 1.3,
+    const tl = gsap.timeline({
+      onComplete: () => onComplete?.(),
+    });
+
+    tl.to(pieces, {
+      duration: 0.75,
       physics2D: {
         velocity: "random(500,1100)",
         angle: "random(240,300)",
@@ -40,12 +44,31 @@ export function ChainCover({ onComplete }: { onComplete?: () => void }) {
       },
       rotation: "random(-180,180)",
       stagger: { each: 0.01, from: "center" },
-      onComplete: () => onComplete?.(),
     });
+
+    // Settle every piece onto the exact grid coordinate ChainFall starts
+    // from on the next page, so the transition reads as one continuous
+    // chain of links instead of jumping between two different layouts.
+    tl.to(
+      pieces,
+      {
+        duration: 0.4,
+        ease: "power2.out",
+        left: (i: number) => `${CHAIN_PIECES[i].left}vw`,
+        top: (i: number) => `${CHAIN_PIECES[i].top}vh`,
+        xPercent: 0,
+        yPercent: 0,
+        x: 0,
+        y: 0,
+        rotation: 0,
+        stagger: { each: 0.005, from: "center" },
+      },
+      "-=0.15"
+    );
 
     return () => {
       backdropTween.kill();
-      burstTween.kill();
+      tl.kill();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

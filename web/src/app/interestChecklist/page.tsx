@@ -1,62 +1,48 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ChainFall } from "@/components/effects/ChainFall";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Checkbox } from "@/components/Checkbox";
 
 const HOBBIES = [
-  "Basketball",
-  "Soccer",
-  "Art",
-  "Music",
-  "Climbing",
-  "Boxing",
-  "Gaming",
-  "Hiking",
-  "Cooking",
-  "Photography",
-  "Dancing",
-  "Reading",
-  "Writing",
-  "Swimming",
-  "Yoga",
-  "Cycling",
-  "Movies",
-  "Travel",
-  "Fashion",
-  "Gardening",
-  "Volunteering",
-  "Chess",
-  "Fitness",
-  "Running",
-  "Skateboarding",
-  "Surfing",
-  "Tennis",
-  "Baseball",
-  "Football",
-  "Volleyball",
-  "Martial Arts",
-  "Singing",
-  "Theater",
-  "Filmmaking",
-  "Coding",
-  "Baking",
-  "Fishing",
+  "Academics",
+  "Agriculture",
+  "Animals",
+  "Arts",
+  "Backpacking",
+  "Business",
   "Camping",
-  "Kayaking",
-  "Skiing",
-  "Snowboarding",
-  "Golf",
-  "Bowling",
-  "Board Games",
-  "Meditation",
-  "Astronomy",
-  "Journaling",
-  "Woodworking",
-  "Pottery",
-  "Knitting",
+  "Community Service",
+  "Culture",
+  "Engineering",
+  "Entrepreneurship",
+  "Environment",
+  "Esports",
+  "Finance",
+  "Fitness",
+  "Gaming",
+  "Gym",
+  "Health",
+  "Hiking",
+  "Identity",
+  "Inclusion",
+  "Medicine",
+  "Mentorship",
+  "Music",
+  "Outdoors",
+  "Performance",
+  "Powerlifting",
+  "Research",
+  "Singing",
+  "STEM",
+  "Technology",
+  "Video Games",
+  "Volunteering",
+  "Weightlifting",
+  "Wellness",
 ];
 
 const MAX_SELECTIONS = 5;
@@ -64,6 +50,7 @@ const HEADING = "What is your taste?";
 const EASE = [0.76, 0, 0.24, 1] as const;
 
 export default function InterestChecklistPage() {
+  const router = useRouter();
   const [revealed, setRevealed] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -148,25 +135,48 @@ export default function InterestChecklistPage() {
           </div>
         </div>
 
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50"
-        >
-          Next
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            className="h-4 w-4"
+        <div className="flex items-center gap-4">
+          <motion.button
+            type="button"
+            onClick={() => router.push("/majClass")}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50"
           >
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </motion.button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              className="h-4 w-4"
+            >
+              <path d="M19 12H5M11 6l-6 6 6 6" />
+            </svg>
+            Back
+          </motion.button>
+
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50"
+          >
+            Next
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              className="h-4 w-4"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </motion.button>
+        </div>
 
         <StepIndicator active={2} />
       </div>

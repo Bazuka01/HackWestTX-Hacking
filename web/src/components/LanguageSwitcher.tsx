@@ -1,8 +1,11 @@
 "use client";
 
 import { useRef } from "react";
+import { usePathname } from "next/navigation";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { LANGUAGES, type LanguageCode } from "@/lib/i18n";
+
+const DASHBOARD_ROUTES = ["/homePage", "/calendar", "/savedEvents"];
 
 export function LanguageSwitcher({
   value,
@@ -12,7 +15,11 @@ export function LanguageSwitcher({
   onSelect: (code: LanguageCode, origin: { x: number; y: number }) => void;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
   const current = LANGUAGES.find((l) => l.code === value) ?? LANGUAGES[0];
+  const isDashboard = DASHBOARD_ROUTES.some((route) =>
+    pathname?.startsWith(route)
+  );
 
   function handleSelect(code: LanguageCode) {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -28,7 +35,11 @@ export function LanguageSwitcher({
         <button
           ref={triggerRef}
           type="button"
-          className="fixed top-6 right-6 z-40 flex cursor-pointer items-center gap-2 rounded-full border border-slate-500/15 bg-orange-200 px-4 py-2 text-sm text-slate-500 outline-none transition-colors hover:border-slate-500/40"
+          className={
+            isDashboard
+              ? "fixed top-6 right-6 z-40 flex cursor-pointer items-center gap-2 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-4 py-2 text-sm text-[#F2F0EE] outline-none transition-colors hover:border-[#C8102E]"
+              : "fixed top-6 right-6 z-40 flex cursor-pointer items-center gap-2 rounded-full border border-slate-500/15 bg-orange-200 px-4 py-2 text-sm text-slate-500 outline-none transition-colors hover:border-slate-500/40"
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -49,13 +60,21 @@ export function LanguageSwitcher({
         <DropdownMenu.Content
           align="end"
           sideOffset={8}
-          className="z-40 min-w-[10rem] overflow-hidden rounded-2xl border border-slate-500/10 bg-orange-200 py-1 shadow-lg"
+          className={
+            isDashboard
+              ? "z-40 min-w-[10rem] overflow-hidden rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] py-1 shadow-lg"
+              : "z-40 min-w-[10rem] overflow-hidden rounded-2xl border border-slate-500/10 bg-orange-200 py-1 shadow-lg"
+          }
         >
           {LANGUAGES.map((lang) => (
             <DropdownMenu.Item
               key={lang.code}
               onSelect={() => handleSelect(lang.code)}
-              className="cursor-pointer px-4 py-2 text-sm text-slate-500 outline-none data-[highlighted]:bg-slate-500/5"
+              className={
+                isDashboard
+                  ? "cursor-pointer px-4 py-2 text-sm text-[#F2F0EE] outline-none data-[highlighted]:bg-[#C8102E]/20"
+                  : "cursor-pointer px-4 py-2 text-sm text-slate-500 outline-none data-[highlighted]:bg-slate-500/5"
+              }
             >
               {lang.label}
             </DropdownMenu.Item>

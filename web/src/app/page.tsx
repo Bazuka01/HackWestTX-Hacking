@@ -39,10 +39,12 @@ export default function Home() {
     const target = isSignup ? "signup" : "login";
     // Full document navigation: the Auth0 route handler issues a redirect
     // to the hosted login page, which a client-side router push can't follow.
+    // returnTo sends the user to the onboarding flow after Auth0 finishes —
+    // without it, the SDK's default is "/", which is this same form.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `/auth/login?screen_hint=${target}&login_hint=${encodeURIComponent(
       email
-    )}`;
+    )}&returnTo=${encodeURIComponent("/majClass")}`;
   }
 
   return (
@@ -96,6 +98,16 @@ export default function Home() {
                 className="w-full rounded-full border border-slate-500/30 bg-orange-200 px-6 py-3 text-slate-600/85 placeholder:text-slate-500/60 outline-none transition-colors hover:border-slate-500/55 focus:border-slate-600"
               />
             </motion.div>
+
+            {!isSignup && (
+              <motion.a
+                href="/forgotPassword"
+                variants={item}
+                className="cursor-pointer text-sm text-slate-500/40 transition-colors duration-300 ease-out hover:text-slate-500"
+              >
+                Forgot password?
+              </motion.a>
+            )}
 
             <motion.button
               type="button"
