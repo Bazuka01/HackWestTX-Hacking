@@ -5,8 +5,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
-# Load the TigerData database URL from the .env file in the project root.
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load the TigerData database URL from backend/.env.
+load_dotenv(Path(__file__).parent / ".env")
 db_url = os.getenv("TIGER_DATA_URL")
 
 if not db_url:
