@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Clock, MapPin, X } from "lucide-react";
 
 export type EventDetails = {
+  id: string;
   title: string;
   orgName: string;
   orgColor?: string;
@@ -24,9 +25,11 @@ function formatFullDate(dateStr: string) {
 export function EventDetailsDialog({
   event,
   onClose,
+  onRemove,
 }: {
   event: EventDetails | null;
   onClose: () => void;
+  onRemove?: (eventId: string) => void;
 }) {
   return (
     <Dialog.Root
@@ -71,6 +74,16 @@ export function EventDetailsDialog({
                   {event.location}
                 </div>
               </div>
+
+              {onRemove && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(event.id)}
+                  className="mt-6 w-full cursor-pointer rounded-full border border-[#2E2E2E] py-2.5 text-sm font-semibold text-[#8C8785] transition-colors hover:border-[#C8102E] hover:text-[#C8102E]"
+                >
+                  Remove from saved
+                </button>
+              )}
             </>
           )}
         </Dialog.Content>

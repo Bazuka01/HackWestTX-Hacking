@@ -40,6 +40,10 @@ def recommend_orgs(student_profile, organizations):
     Do not invent organization information.
     Return each organization's ID and a one-sentence explanation.
 
+    The student reads these explanations, so write them to the student
+    using "you" and "your", for example: "This club fits your interest in
+    robotics." Never refer to them as "the student".
+
     Student profile:
     {json.dumps(student_profile)}
 
