@@ -65,6 +65,8 @@ const en = {
     saveEvent: "Save event",
     alreadySaved: "Already saved",
     continue: "Continue",
+    keep: "Keep",
+    kept: "Kept",
   },
   nav: {
     browse: "Browse",
@@ -139,6 +141,11 @@ const en = {
     eventSavedHint: "Find it on your Saved Events page.",
     saveFailed: "Couldn't save event",
     saveFailedHint: "Please try again.",
+    addedByYou: "Added by you",
+    addedReason: "You added this from Browse.",
+    keptTitle: "Kept on your home page",
+    keptDescription: "It stays when you get new picks.",
+    removeFromHome: "Remove from home",
   },
   saved: {
     title: "Saved Events",
@@ -169,6 +176,10 @@ const en = {
     showHidden: "Show hidden",
     showMore: "Show more",
     upcomingEvents: "Upcoming events",
+    add: "Add",
+    added: "Added",
+    addHint: "Add to your home page",
+    removeHint: "Remove from your home page",
   },
   options: {
     majors: {
@@ -330,6 +341,8 @@ const es: Messages = {
     saveEvent: "Guardar evento",
     alreadySaved: "Ya guardado",
     continue: "Continuar",
+    keep: "Fijar",
+    kept: "Fijada",
   },
   nav: {
     browse: "Explorar",
@@ -404,6 +417,11 @@ const es: Messages = {
     eventSavedHint: "Encuéntralo en tu página de eventos guardados.",
     saveFailed: "No se pudo guardar el evento",
     saveFailedHint: "Inténtalo de nuevo.",
+    addedByYou: "Agregadas por ti",
+    addedReason: "La agregaste desde Explorar.",
+    keptTitle: "Fijada en tu página de inicio",
+    keptDescription: "Se queda cuando pidas nuevas sugerencias.",
+    removeFromHome: "Quitar de inicio",
   },
   saved: {
     title: "Eventos guardados",
@@ -434,6 +452,10 @@ const es: Messages = {
     showHidden: "Mostrar ocultas",
     showMore: "Mostrar más",
     upcomingEvents: "Próximos eventos",
+    add: "Agregar",
+    added: "Agregada",
+    addHint: "Agregar a tu página de inicio",
+    removeHint: "Quitar de tu página de inicio",
   },
   options: {
     majors: {
@@ -593,6 +615,8 @@ const fr: Messages = {
     saveEvent: "Enregistrer l'événement",
     alreadySaved: "Déjà enregistré",
     continue: "Continuer",
+    keep: "Garder",
+    kept: "Gardée",
   },
   nav: {
     browse: "Explorer",
@@ -667,6 +691,11 @@ const fr: Messages = {
     eventSavedHint: "Retrouvez-le sur la page Événements enregistrés.",
     saveFailed: "Impossible d'enregistrer l'événement",
     saveFailedHint: "Veuillez réessayer.",
+    addedByYou: "Ajoutées par vous",
+    addedReason: "Vous l'avez ajoutée depuis Explorer.",
+    keptTitle: "Gardée sur votre page d'accueil",
+    keptDescription: "Elle reste quand vous demandez de nouvelles suggestions.",
+    removeFromHome: "Retirer de l'accueil",
   },
   saved: {
     title: "Événements enregistrés",
@@ -697,6 +726,10 @@ const fr: Messages = {
     showHidden: "Afficher les masquées",
     showMore: "Afficher plus",
     upcomingEvents: "Événements à venir",
+    add: "Ajouter",
+    added: "Ajoutée",
+    addHint: "Ajouter à votre page d'accueil",
+    removeHint: "Retirer de votre page d'accueil",
   },
   options: {
     majors: {
@@ -856,6 +889,8 @@ const hi: Messages = {
     saveEvent: "इवेंट सेव करें",
     alreadySaved: "पहले से सेव है",
     continue: "जारी रखें",
+    keep: "रखें",
+    kept: "रखा गया",
   },
   nav: {
     browse: "ब्राउज़ करें",
@@ -930,6 +965,11 @@ const hi: Messages = {
     eventSavedHint: "इसे सेव किए इवेंट पेज पर देखें।",
     saveFailed: "इवेंट सेव नहीं हो सका",
     saveFailedHint: "कृपया फिर से कोशिश करें।",
+    addedByYou: "आपके जोड़े गए",
+    addedReason: "आपने इसे ब्राउज़ से जोड़ा है।",
+    keptTitle: "आपके होम पेज पर रखा गया",
+    keptDescription: "नए सुझाव पाने पर भी यह बना रहेगा।",
+    removeFromHome: "होम से हटाएँ",
   },
   saved: {
     title: "सेव किए इवेंट",
@@ -960,6 +1000,10 @@ const hi: Messages = {
     showHidden: "छिपे हुए दिखाएँ",
     showMore: "और दिखाएँ",
     upcomingEvents: "आने वाले इवेंट",
+    add: "जोड़ें",
+    added: "जोड़ा गया",
+    addHint: "अपने होम पेज पर जोड़ें",
+    removeHint: "अपने होम पेज से हटाएँ",
   },
   options: {
     majors: {
@@ -1119,6 +1163,8 @@ const pt: Messages = {
     saveEvent: "Salvar evento",
     alreadySaved: "Já salvo",
     continue: "Continuar",
+    keep: "Manter",
+    kept: "Mantida",
   },
   nav: {
     browse: "Explorar",
@@ -1193,6 +1239,11 @@ const pt: Messages = {
     eventSavedHint: "Encontre-o na página Eventos salvos.",
     saveFailed: "Não foi possível salvar o evento",
     saveFailedHint: "Tente novamente.",
+    addedByYou: "Adicionadas por você",
+    addedReason: "Você adicionou esta em Explorar.",
+    keptTitle: "Mantida na sua página inicial",
+    keptDescription: "Ela fica quando você pedir novas sugestões.",
+    removeFromHome: "Remover do início",
   },
   saved: {
     title: "Eventos salvos",
@@ -1223,6 +1274,10 @@ const pt: Messages = {
     showHidden: "Mostrar ocultadas",
     showMore: "Mostrar mais",
     upcomingEvents: "Próximos eventos",
+    add: "Adicionar",
+    added: "Adicionada",
+    addHint: "Adicionar à sua página inicial",
+    removeHint: "Remover da sua página inicial",
   },
   options: {
     majors: {

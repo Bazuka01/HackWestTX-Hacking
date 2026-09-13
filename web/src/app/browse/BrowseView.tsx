@@ -5,7 +5,14 @@ import { ArrowUpRight, Check, EyeOff, Plus, Search } from "lucide-react";
 import { AddToCalendar } from "@/components/AddToCalendar";
 import { DashboardNav } from "@/components/DashboardNav";
 import { useLocale, useT } from "@/components/LanguageProvider";
-import { hideOrg, saveEvent, unhideOrg, unsaveEvent } from "@/app/actions";
+import {
+  hideOrg,
+  keepOrg,
+  saveEvent,
+  unhideOrg,
+  unkeepOrg,
+  unsaveEvent,
+} from "@/app/actions";
 import {
   formatEventDate,
   instagramUrl,
@@ -50,6 +57,8 @@ export function BrowseView({ data }: { data: BrowseData }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [hiddenIds, setHiddenIds] = useState(() => new Set(data.hidden_org_ids));
   const [savedIds, setSavedIds] = useState(() => new Set(data.saved_event_ids));
+  // Organizations on the home page for good (kept or added).
+  const [keptIds, setKeptIds] = useState(() => new Set(data.kept_org_ids));
   const matchedIds = useMemo(() => new Set(data.matched_org_ids), [data]);
 
   const indexed = useMemo(
@@ -95,6 +104,30 @@ export function BrowseView({ data }: { data: BrowseData }) {
     } catch {
       apply(!on);
     }
+  }
+
+  // "Add" puts the organization on the home page (and shows it again if it
+  // was hidden); pressing it again takes it off.
+  function handleToggleAdd(orgId: string) {
+    const add = !keptIds.has(orgId);
+    if (add && hiddenIds.has(orgId)) {
+      setHiddenIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orgId);
+        return next;
+      });
+    }
+    toggle(setKeptIds, orgId, add, add ? keepOrg : unkeepOrg);
+  }
+
+  // Hiding also takes the organization off the home page (as the account does).
+  function handleHide(orgId: string) {
+    setKeptIds((prev) => {
+      const next = new Set(prev);
+      next.delete(orgId);
+      return next;
+    });
+    toggle(setHiddenIds, orgId, true, hideOrg);
   }
 
   function resetPaging<T>(setter: (value: T) => void) {
@@ -186,7 +219,7 @@ export function BrowseView({ data }: { data: BrowseData }) {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => toggle(setHiddenIds, org.id, true, hideOrg)}
+                      onClick={() => handleHide(org.id)}
                       aria-label={t.common.notInterested}
                       title={t.common.notInterested}
                       className="absolute top-3 right-3 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[#8C8785] transition-colors hover:bg-[#2E2E2E] hover:text-white"
@@ -280,17 +313,46 @@ export function BrowseView({ data }: { data: BrowseData }) {
                     </div>
                   )}
 
-                  {org.instagramUsername && (
-                    <a
-                      href={instagramUrl(org.instagramUsername)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-auto flex w-fit items-center gap-0.5 text-xs text-[#DC143C] transition-colors hover:text-[#a90d26]"
-                    >
-                      @{org.instagramUsername}
-                      <ArrowUpRight className="h-3 w-3" />
-                    </a>
-                  )}
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                    {org.instagramUsername ? (
+                      <a
+                        href={instagramUrl(org.instagramUsername)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex min-w-0 items-center gap-0.5 truncate text-xs text-[#DC143C] transition-colors hover:text-[#a90d26]"
+                      >
+                        @{org.instagramUsername}
+                        <ArrowUpRight className="h-3 w-3 shrink-0" />
+                      </a>
+                    ) : (
+                      <span />
+                    )}
+                    {(() => {
+                      const onHome = keptIds.has(org.id);
+                      const hint = onHome ? t.browse.removeHint : t.browse.addHint;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAdd(org.id)}
+                          aria-pressed={onHome}
+                          aria-label={hint}
+                          title={hint}
+                          className={`flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                            onHome
+                              ? "bg-[#DC143C] text-white hover:bg-[#a90d26]"
+                              : "border border-[#DC143C]/40 text-[#DC143C] hover:border-[#DC143C]"
+                          }`}
+                        >
+                          {onHome ? (
+                            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                          ) : (
+                            <Plus className="h-3.5 w-3.5" strokeWidth={3} />
+                          )}
+                          {onHome ? t.browse.added : t.browse.add}
+                        </button>
+                      );
+                    })()}
+                  </div>
                 </article>
               );
             })}

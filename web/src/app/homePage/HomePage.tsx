@@ -9,7 +9,14 @@ import { Doors } from "@/components/effects/Doors";
 import { useT } from "@/components/LanguageProvider";
 import { MotionPathTrail } from "@/components/MotionPathTrail";
 import { ScrollProgressRail } from "@/components/ScrollProgressRail";
-import { getNewPicks, hideOrg, saveEvent, unhideOrg } from "@/app/actions";
+import {
+  getNewPicks,
+  hideOrg,
+  keepOrg,
+  saveEvent,
+  unhideOrg,
+  unkeepOrg,
+} from "@/app/actions";
 import type { Dashboard } from "@/lib/api";
 import { labelFor } from "@/lib/i18n";
 import { EventTile } from "./EventTile";
@@ -34,6 +41,15 @@ export function HomePage({
   );
   // Organizations marked "Not interested" on this visit, hidden right away.
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  // Kept organizations stay when new picks come in.
+  const [keptIds, setKeptIds] = useState(
+    () =>
+      new Set(
+        [...dashboard.recommendations, ...dashboard.suggestions, ...dashboard.added]
+          .filter((match) => match.kept)
+          .map((match) => match.org_id)
+      )
+  );
   const [notice, setNotice] = useState<Notice | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
   const [findingPicks, startFindingPicks] = useTransition();
@@ -42,7 +58,11 @@ export function HomePage({
   const visible = (match: { org_id: string }) => !hiddenIds.has(match.org_id);
   const recommendations = dashboard.recommendations.filter(visible);
   const suggestions = dashboard.suggestions.filter(visible);
-  const matches = [...recommendations, ...suggestions];
+  // Added organizations leave the page as soon as they're un-kept.
+  const added = dashboard.added.filter(
+    (match) => visible(match) && keptIds.has(match.org_id)
+  );
+  const matches = [...recommendations, ...added, ...suggestions];
 
   // Upcoming events from every matched organization, soonest first.
   const events = matches
@@ -66,13 +86,35 @@ export function HomePage({
     });
   }
 
-  function setHidden(orgId: string, hidden: boolean) {
-    setHiddenIds((prev) => {
+  function toggleIn(
+    set: typeof setHiddenIds,
+    orgId: string,
+    on: boolean
+  ) {
+    set((prev) => {
       const next = new Set(prev);
-      if (hidden) next.add(orgId);
+      if (on) next.add(orgId);
       else next.delete(orgId);
       return next;
     });
+  }
+
+  function setHidden(orgId: string, hidden: boolean) {
+    toggleIn(setHiddenIds, orgId, hidden);
+  }
+
+  async function handleToggleKeep(orgId: string) {
+    const keep = !keptIds.has(orgId);
+    toggleIn(setKeptIds, orgId, keep);
+    if (keep) {
+      showNotice({ tone: "success", title: t.home.keptTitle, description: t.home.keptDescription });
+    }
+
+    try {
+      await (keep ? keepOrg(orgId) : unkeepOrg(orgId));
+    } catch {
+      toggleIn(setKeptIds, orgId, !keep);
+    }
   }
 
   async function handleSave(eventId: string) {
@@ -91,8 +133,10 @@ export function HomePage({
     }
   }
 
+  // Hiding also un-keeps the organization (the account does the same).
   async function handleHide(orgId: string) {
     setHidden(orgId, true);
+    toggleIn(setKeptIds, orgId, false);
     showNotice({
       tone: "hidden",
       title: t.home.hiddenTitle,
@@ -219,6 +263,8 @@ export function HomePage({
                   <OrgTile
                     match={match}
                     featured={i === 0}
+                    kept={keptIds.has(match.org_id)}
+                    onToggleKeep={() => handleToggleKeep(match.org_id)}
                     onHide={() => handleHide(match.org_id)}
                   />
                 </div>
@@ -227,6 +273,27 @@ export function HomePage({
             </div>
           )}
         </section>
+
+        {added.length > 0 && (
+          <section className="mt-10">
+            <h2 className="font-heading mb-4 text-lg font-semibold text-white">
+              {t.home.addedByYou}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {added.map((match) => (
+                <div key={match.org_id} className="sm:min-h-[174px]">
+                  <OrgTile
+                    match={match}
+                    kept
+                    added
+                    onToggleKeep={() => handleToggleKeep(match.org_id)}
+                    onHide={() => handleHide(match.org_id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="mt-10">
           <h2 className="font-heading mb-4 text-lg font-semibold text-white">
@@ -260,7 +327,12 @@ export function HomePage({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {suggestions.map((match) => (
                 <div key={match.org_id} className="sm:min-h-[174px]">
-                  <OrgTile match={match} onHide={() => handleHide(match.org_id)} />
+                  <OrgTile
+                    match={match}
+                    kept={keptIds.has(match.org_id)}
+                    onToggleKeep={() => handleToggleKeep(match.org_id)}
+                    onHide={() => handleHide(match.org_id)}
+                  />
                 </div>
               ))}
             </div>

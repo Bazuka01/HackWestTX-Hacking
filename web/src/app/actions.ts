@@ -4,9 +4,11 @@ import { refresh } from "next/cache";
 import {
   BackendError,
   deleteHiddenOrg,
+  deleteKeptOrg,
   deleteSavedEvent,
   postMatches,
   putHiddenOrg,
+  putKeptOrg,
   putProfile,
   putSavedEvent,
 } from "@/lib/account";
@@ -60,4 +62,13 @@ export async function hideOrg(orgId: string) {
 
 export async function unhideOrg(orgId: string) {
   await deleteHiddenOrg(String(orgId));
+}
+
+// "Keep" on the home page, or "Add" from Browse.
+export async function keepOrg(orgId: string) {
+  await putKeptOrg(String(orgId));
+}
+
+export async function unkeepOrg(orgId: string) {
+  await deleteKeptOrg(String(orgId));
 }

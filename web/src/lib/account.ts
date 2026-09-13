@@ -134,6 +134,19 @@ export function deleteHiddenOrg(orgId: string) {
   });
 }
 
+// Keep a match, or add an organization from Browse, so it stays on the home page.
+export function putKeptOrg(orgId: string) {
+  return callBackend<void>(`/users/me/kept-orgs/${encodeURIComponent(orgId)}`, {
+    method: "PUT",
+  });
+}
+
+export function deleteKeptOrg(orgId: string) {
+  return callBackend<void>(`/users/me/kept-orgs/${encodeURIComponent(orgId)}`, {
+    method: "DELETE",
+  });
+}
+
 export function putSavedEvent(eventId: string) {
   return callBackend<void>(
     `/users/me/saved-events/${encodeURIComponent(eventId)}`,

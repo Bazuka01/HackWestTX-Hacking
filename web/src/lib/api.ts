@@ -40,10 +40,13 @@ export type OrgEvent = {
   source_posted_at: string | null;
 };
 
-// An organization Gemini picked for the student, with its upcoming events.
+// An organization on the student's home page, with its upcoming events.
 export type Match = {
   org_id: string;
-  reason: string;
+  // Gemini's explanation; null for organizations added from Browse.
+  reason: string | null;
+  // Kept organizations stay when the student gets new picks.
+  kept: boolean;
   organization: Organization;
   events: OrgEvent[];
 };
@@ -51,6 +54,8 @@ export type Match = {
 export type Matches = {
   recommendations: Match[];
   suggestions: Match[];
+  // Organizations the student added from Browse (always kept).
+  added: Match[];
 };
 
 export type SavedEvent = OrgEvent & { org_name: string };
@@ -67,6 +72,8 @@ export type OrganizationWithEvents = Organization & { events: OrgEvent[] };
 export type BrowseData = {
   orgs: OrganizationWithEvents[];
   matched_org_ids: string[];
+  // On the home page for good: kept matches and added organizations.
+  kept_org_ids: string[];
   hidden_org_ids: string[];
   saved_event_ids: string[];
 };

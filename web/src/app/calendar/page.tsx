@@ -7,7 +7,7 @@ export default async function CalendarPage() {
   // Signed-out visitors are sent to sign in.
   const dashboard = await getDashboard();
   const colors = matchColors(dashboard);
-  const matches = [...dashboard.recommendations, ...dashboard.suggestions];
+  const matches = [...dashboard.recommendations, ...dashboard.added, ...dashboard.suggestions];
 
   const orgs: CalendarOrg[] = matches.map((match) => ({
     id: match.org_id,
