@@ -69,6 +69,7 @@ export function MatchesView() {
   return (
     <div className="relative flex min-h-screen w-full flex-1 justify-center overflow-hidden bg-[#1A1A1A] px-6 py-16">
       <AmbientBackground />
+      <ScrollProgressRail fixed className="top-1/2 right-6 z-40 -translate-y-1/2" />
       <ChainFall onComplete={() => setRevealed(true)} />
       {leavingTo && (
         <Doors variant="out" onComplete={() => router.push(leavingTo)} />
@@ -117,7 +118,7 @@ export function MatchesView() {
 
         {state.status === "ready" && (
           <>
-            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto]">
+            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
               {state.matches.recommendations.map((match, i) => (
                 <motion.div
                   key={match.org_id}
@@ -129,7 +130,6 @@ export function MatchesView() {
                   <OrgTile match={match} color={colors?.get(match.org_id)} featured />
                 </motion.div>
               ))}
-              <ScrollProgressRail className="hidden sm:col-start-3 sm:row-start-2 sm:block sm:self-center" />
             </div>
 
             {state.matches.suggestions.length > 0 && (
