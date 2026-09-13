@@ -10,6 +10,12 @@ with (Path(__file__).parent / "org.json").open(
 ) as file:
     organizations = json.load(file)
 
+# Load the actual event list from our JSON file.
+with (Path(__file__).parent / "events.json").open(
+    encoding="utf-8"
+) as file:
+    events = json.load(file)
+
 # Create the backend application.
 app = FastAPI()
 
@@ -27,7 +33,22 @@ class StudentProfile(BaseModel):
     ethnicity: str | None = None
 
 
-# Receive answers, call Gemini, and return the three matches.
+# Receive answers, call Gemini, and return the recommendations with organization and event details.
 @app.post("/recommendations")
 def get_recommendations(profile: StudentProfile):
-    return recommend_orgs(profile.model_dump(), organizations)
+    result = recommend_orgs(profile.model_dump(), organizations)
+
+    for recommendation in result["recommendations"]:
+        org_id = recommendation["org_id"]
+
+        recommendation["organization"] = next(
+            (org for org in organizations if org["id"] == org_id),
+            None
+        )
+
+        recommendation["events"] = [
+            event for event in events
+            if event["org_id"] == org_id
+        ]
+
+    return result
