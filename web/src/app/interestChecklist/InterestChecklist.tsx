@@ -7,7 +7,9 @@ import { ChainCover } from "@/components/effects/ChainCover";
 import { ChainFall } from "@/components/effects/ChainFall";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Checkbox } from "@/components/Checkbox";
-import { saveProfileAnswers } from "@/lib/studentSession";
+import { saveProfile } from "@/app/actions";
+import type { StudentProfile } from "@/lib/api";
+import { clearProfileDraft, loadProfileDraft } from "@/lib/profileDraft";
 
 const HOBBIES = [
   "Academics",
@@ -51,11 +53,23 @@ const MAX_SELECTIONS = 5;
 const HEADING = "What is your taste?";
 const EASE = [0.76, 0, 0.24, 1] as const;
 
-export default function InterestChecklistPage() {
+// savedProfile pre-selects earlier picks and fills in step 1's answers if
+// the student came straight here.
+export function InterestChecklist({
+  savedProfile,
+}: {
+  savedProfile: StudentProfile | null;
+}) {
   const router = useRouter();
   const [revealed, setRevealed] = useState(false);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(() =>
+    (savedProfile?.hobbies ?? [])
+      .filter((hobby) => HOBBIES.includes(hobby))
+      .slice(0, MAX_SELECTIONS)
+  );
   const [transitioning, setTransitioning] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,14 +94,35 @@ export default function InterestChecklistPage() {
     });
   }
 
-  // The checklist mixes interests and hobbies, so send the picks as hobbies.
-  function handleNext() {
-    saveProfileAnswers({ hobbies: selected, interests: [] });
-    setTransitioning(true);
+  // Save both steps' answers to the account. The checklist mixes interests
+  // and hobbies, so the picks are sent as hobbies.
+  async function handleNext() {
+    const stepOne = loadProfileDraft() ?? savedProfile;
+    if (!stepOne?.major) {
+      router.push("/majClass");
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(false);
+    try {
+      await saveProfile({
+        major: stepOne.major,
+        class_year: stepOne.class_year,
+        ethnicity: stepOne.ethnicity,
+        hobbies: selected,
+        interests: [],
+      });
+      clearProfileDraft();
+      setTransitioning(true);
+    } catch {
+      setSaveError(true);
+      setSaving(false);
+    }
   }
 
   const words = HEADING.split(" ");
-  const canContinue = selected.length > 0;
+  const canContinue = selected.length > 0 && !saving;
 
   return (
     <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-orange-200 px-6 py-16">
@@ -179,7 +214,7 @@ export default function InterestChecklistPage() {
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
             className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next
+            {saving ? "Saving…" : "Next"}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -192,6 +227,12 @@ export default function InterestChecklistPage() {
             </svg>
           </motion.button>
         </div>
+
+        {saveError && (
+          <p className="-mt-6 text-sm text-red-600">
+            We couldn&apos;t save your answers. Please try again.
+          </p>
+        )}
 
         <StepIndicator active={2} />
       </div>

@@ -1,26 +1,30 @@
 "use client";
 
 import { Check, Plus } from "lucide-react";
-import type { RecommendedEvent } from "@/lib/events";
-
-function formatEventDate(dateStr: string) {
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
+import { formatEventDate, type OrgEvent } from "@/lib/api";
+import { OTHER_ORG_COLOR } from "@/lib/matchColors";
 
 export function EventTile({
   event,
+  orgName,
+  orgColor = OTHER_ORG_COLOR,
   featured,
   isSaved,
   onSave,
 }: {
-  event: RecommendedEvent;
+  event: OrgEvent;
+  orgName: string;
+  orgColor?: string;
   featured?: boolean;
   isSaved: boolean;
   onSave: () => void;
 }) {
+  const details = [
+    formatEventDate(event.start_date),
+    event.start_time,
+    event.location ?? "Location TBA",
+  ].filter(Boolean);
+
   return (
     <div
       className={`relative flex h-full flex-col justify-between overflow-hidden rounded-lg border border-[#2E2E2E] bg-[#1A1A1A] transition-transform duration-200 ease-out hover:-translate-y-1 hover:scale-[1.02] ${
@@ -47,30 +51,36 @@ export function EventTile({
 
       <div>
         <div
-          className="mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium text-[#F2F0EE]"
-          style={{ backgroundColor: `${event.orgColor}33` }}
+          className="mb-2 inline-flex max-w-[calc(100%-2rem)] items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium text-[#F2F0EE]"
+          style={{ backgroundColor: `${orgColor}33` }}
         >
           <span
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: event.orgColor }}
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: orgColor }}
           />
-          {event.org}
+          <span className="truncate">{orgName}</span>
         </div>
         <div
           className={`pr-8 font-semibold text-[#F2F0EE] ${
             featured ? "text-xl" : "text-[15px]"
           }`}
         >
-          {event.title}
+          {event.source_url ? (
+            <a
+              href={event.source_url}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-[#C8102E]"
+            >
+              {event.title}
+            </a>
+          ) : (
+            event.title
+          )}
         </div>
-        {featured && event.blurb && (
-          <p className="mt-2 text-sm text-[#8C8785]">{event.blurb}</p>
-        )}
       </div>
 
-      <div className="mt-3 text-xs text-[#8C8785]">
-        {formatEventDate(event.date)} · {event.time} · {event.location}
-      </div>
+      <div className="mt-3 text-xs text-[#8C8785]">{details.join(" · ")}</div>
     </div>
   );
 }

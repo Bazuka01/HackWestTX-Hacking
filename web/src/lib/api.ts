@@ -1,9 +1,6 @@
-// Types and requests for the FastAPI backend in /backend.
+// Shapes of the data returned by the FastAPI backend in /backend.
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-// Matches StudentProfile in backend/main.py.
+// Matches StudentProfile in backend/models.py.
 export type StudentProfile = {
   major: string;
   interests: string[];
@@ -43,29 +40,26 @@ export type OrgEvent = {
   source_posted_at: string | null;
 };
 
-export type Recommendation = {
+// An organization Gemini picked for the student, with its upcoming events.
+export type Match = {
   org_id: string;
   reason: string;
   organization: Organization;
   events: OrgEvent[];
 };
 
-export async function fetchRecommendations(
-  profile: StudentProfile
-): Promise<Recommendation[]> {
-  const response = await fetch(`${API_BASE_URL}/recommendations`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(profile),
-  });
+export type Matches = {
+  recommendations: Match[];
+  suggestions: Match[];
+};
 
-  if (!response.ok) {
-    throw new Error(`Recommendations request failed (${response.status})`);
-  }
+export type SavedEvent = OrgEvent & { org_name: string };
 
-  const data: { recommendations: Recommendation[] } = await response.json();
-  return data.recommendations;
-}
+// GET /users/me/dashboard
+export type Dashboard = Matches & {
+  profile: StudentProfile | null;
+  saved_events: SavedEvent[];
+};
 
 // "2026-09-13" -> "Sep 13". Built from the date parts so the day never
 // shifts with the viewer's time zone.

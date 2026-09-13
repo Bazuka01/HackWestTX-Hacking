@@ -7,8 +7,8 @@ import gsap from "gsap";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { ChevronDown } from "lucide-react";
 import { DashboardNav } from "@/components/DashboardNav";
-import { formatEventDate } from "@/lib/api";
-import { useSavedRecommendations } from "@/lib/studentSession";
+import { unsaveEvent } from "@/app/actions";
+import { formatEventDate, type SavedEvent } from "@/lib/api";
 import { EventDetailsDialog, type EventDetails } from "./EventDetailsDialog";
 
 gsap.registerPlugin(InertiaPlugin);
@@ -23,30 +23,44 @@ type EventItem = {
   location: string;
 };
 
-export default function SavedEventsPage() {
+// The events saved to the student's account, soonest first.
+export function SavedEventsView({ savedEvents }: { savedEvents: SavedEvent[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [showScrollArrow, setShowScrollArrow] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventDetails | null>(null);
-  const recommendations = useSavedRecommendations();
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
 
-  // Every event from the student's recommended organizations, soonest first.
   const events = useMemo<EventItem[]>(
     () =>
-      (recommendations ?? [])
-        .flatMap((rec) =>
-          rec.events.map((event) => ({
-            id: event.id,
-            title: event.title,
-            orgName: rec.organization.name,
-            startDate: event.start_date,
-            date: formatEventDate(event.start_date),
-            time: event.start_time,
-            location: event.location ?? "Location TBA",
-          }))
-        )
-        .sort((a, b) => a.startDate.localeCompare(b.startDate)),
-    [recommendations]
+      savedEvents
+        .filter((event) => !removedIds.has(event.id))
+        .map((event) => ({
+          id: event.id,
+          title: event.title,
+          orgName: event.org_name,
+          startDate: event.start_date,
+          date: formatEventDate(event.start_date),
+          time: event.start_time,
+          location: event.location ?? "Location TBA",
+        })),
+    [savedEvents, removedIds]
   );
+
+  // Hide the event right away; bring it back if the account update fails.
+  async function handleRemove(eventId: string) {
+    setSelectedEvent(null);
+    setRemovedIds((prev) => new Set(prev).add(eventId));
+
+    try {
+      await unsaveEvent(eventId);
+    } catch {
+      setRemovedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(eventId);
+        return next;
+      });
+    }
+  }
 
   // Hover inertia effect adapted from https://madewithgsap.com/effects/free-tutorial001
   useEffect(() => {
@@ -135,19 +149,11 @@ export default function SavedEventsPage() {
           Saved Events
         </h1>
 
-        {recommendations === null && (
+        {events.length === 0 && (
           <EmptyState
-            message="Answer a few questions to get matched with organizations and their events."
-            href="/majClass"
-            linkLabel="Get started"
-          />
-        )}
-
-        {recommendations && events.length === 0 && (
-          <EmptyState
-            message="Your matched organizations haven't posted any events yet."
-            href="/recommendations"
-            linkLabel="Back to your matches"
+            message="You haven't saved any events yet. Tap + on an event from your home page to keep it here."
+            href="/homePage"
+            linkLabel="Find events"
           />
         )}
 
@@ -159,6 +165,7 @@ export default function SavedEventsPage() {
                 type="button"
                 onClick={() =>
                   setSelectedEvent({
+                    id: event.id,
                     title: event.title,
                     orgName: event.orgName,
                     startDate: event.startDate,
@@ -208,6 +215,7 @@ export default function SavedEventsPage() {
       <EventDetailsDialog
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
+        onRemove={handleRemove}
       />
     </div>
   );

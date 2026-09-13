@@ -24,7 +24,7 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };
 
-export default function Home() {
+export function SignInForm() {
   const [mode, setMode] = useState<Mode>("signup");
   const [revealed, setRevealed] = useState(false);
   const [email, setEmail] = useState("");
@@ -39,12 +39,13 @@ export default function Home() {
     const target = isSignup ? "signup" : "login";
     // Full document navigation: the Auth0 route handler issues a redirect
     // to the hosted login page, which a client-side router push can't follow.
-    // returnTo sends the user to the onboarding flow after Auth0 finishes —
-    // without it, the SDK's default is "/", which is this same form.
+    // returnTo sends the user to their home page after Auth0 finishes; it
+    // forwards students who haven't answered the questions yet to onboarding.
+    // Without it, the SDK's default is "/", which is this same form.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `/auth/login?screen_hint=${target}&login_hint=${encodeURIComponent(
       email
-    )}&returnTo=${encodeURIComponent("/majClass")}`;
+    )}&returnTo=${encodeURIComponent("/homePage")}`;
   }
 
   return (

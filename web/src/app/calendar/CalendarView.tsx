@@ -1,11 +1,23 @@
 "use client";
 
 import { DashboardNav } from "@/components/DashboardNav";
-import { RECOMMENDED_EVENTS, MATCHED_ORGS } from "@/lib/events";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  date: string; // yyyy-mm-dd
+  color: string;
+};
+
+export type CalendarOrg = { id: string; name: string; color: string };
+
 type Cell = { day: number; inMonth: boolean; dateKey: string };
+
+function toDateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
 
 function buildMonthGrid(year: number, month: number): Cell[] {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -23,8 +35,7 @@ function buildMonthGrid(year: number, month: number): Cell[] {
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    cells.push({ day, inMonth: true, dateKey });
+    cells.push({ day, inMonth: true, dateKey: toDateKey(year, month, day) });
   }
 
   let trailingDay = 1;
@@ -36,21 +47,30 @@ function buildMonthGrid(year: number, month: number): Cell[] {
   return cells;
 }
 
-export default function CalendarPage() {
+// This month's events from the student's matched organizations and saved
+// events, colored by organization.
+export function CalendarView({
+  events,
+  orgs,
+}: {
+  events: CalendarEvent[];
+  orgs: CalendarOrg[];
+}) {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
-  const todayKey = now.toISOString().slice(0, 10);
+  // Local date parts, not toISOString(), which is UTC and would mark
+  // tomorrow as today during the evening in Texas.
+  const todayKey = toDateKey(year, month, now.getDate());
   const monthLabel = now.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
 
   const cells = buildMonthGrid(year, month);
-  const orgById = new Map(MATCHED_ORGS.map((org) => [org.id, org]));
 
-  const eventsByDate = new Map<string, typeof RECOMMENDED_EVENTS>();
-  for (const event of RECOMMENDED_EVENTS) {
+  const eventsByDate = new Map<string, CalendarEvent[]>();
+  for (const event of events) {
     const list = eventsByDate.get(event.date) ?? [];
     list.push(event);
     eventsByDate.set(event.date, list);
@@ -61,12 +81,12 @@ export default function CalendarPage() {
       <DashboardNav active="calendar" />
 
       <div className="mx-auto max-w-5xl px-6 pt-28 pb-16">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight text-[#F2F0EE]">
             {monthLabel}
           </h1>
           <div className="flex flex-wrap gap-2">
-            {MATCHED_ORGS.map((org) => (
+            {orgs.map((org) => (
               <div
                 key={org.id}
                 className="flex items-center gap-1.5 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-3 py-1 text-xs font-medium text-[#F2F0EE]"
@@ -117,21 +137,16 @@ export default function CalendarPage() {
                     {cell.day}
                   </div>
                   <div className="flex flex-col gap-1">
-                    {dayEvents.slice(0, 2).map((event) => {
-                      const org = orgById.get(event.orgId);
-                      return (
-                        <div
-                          key={event.id}
-                          title={event.title}
-                          className="truncate rounded px-1 py-0.5 text-[10px] font-medium text-[#F2F0EE]"
-                          style={{
-                            backgroundColor: `${org?.color ?? "#C8102E"}33`,
-                          }}
-                        >
-                          {event.title}
-                        </div>
-                      );
-                    })}
+                    {dayEvents.slice(0, 2).map((event) => (
+                      <div
+                        key={event.id}
+                        title={event.title}
+                        className="truncate rounded px-1 py-0.5 text-[10px] font-medium text-[#F2F0EE]"
+                        style={{ backgroundColor: `${event.color}33` }}
+                      >
+                        {event.title}
+                      </div>
+                    ))}
                     {dayEvents.length > 2 && (
                       <div className="text-[10px] text-[#8C8785]">
                         +{dayEvents.length - 2} more

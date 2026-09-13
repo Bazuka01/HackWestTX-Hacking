@@ -7,7 +7,8 @@ import { Fade } from "@/components/effects/Fade";
 import { ChainCover } from "@/components/effects/ChainCover";
 import { Dropdown } from "@/components/Dropdown";
 import { StepIndicator } from "@/components/StepIndicator";
-import { saveProfileAnswers } from "@/lib/studentSession";
+import type { StudentProfile } from "@/lib/api";
+import { saveProfileDraft } from "@/lib/profileDraft";
 
 const MAJORS = [
   "Computer Science",
@@ -63,17 +64,25 @@ const ETHNICITIES = [
   "Prefer not to say",
 ];
 
-export default function MajClassPage() {
+// savedProfile pre-fills the answers when a student comes back to edit them.
+export function MajClassForm({
+  savedProfile,
+}: {
+  savedProfile: StudentProfile | null;
+}) {
   const router = useRouter();
   const [revealed, setRevealed] = useState(false);
-  const [major, setMajor] = useState("");
-  const [classification, setClassification] = useState("");
-  const [ethnicity, setEthnicity] = useState("");
+  const [major, setMajor] = useState(savedProfile?.major ?? "");
+  const [classification, setClassification] = useState(
+    savedProfile?.class_year ?? ""
+  );
+  const [ethnicity, setEthnicity] = useState(savedProfile?.ethnicity ?? "");
   const [transitioning, setTransitioning] = useState(false);
 
   // The recommendations API requires a major; class and ethnicity are optional.
+  // Step 2 saves these to the account together with the interests.
   function handleNext() {
-    saveProfileAnswers({
+    saveProfileDraft({
       major,
       class_year: classification || null,
       ethnicity: ethnicity && ethnicity !== "Prefer not to say" ? ethnicity : null,

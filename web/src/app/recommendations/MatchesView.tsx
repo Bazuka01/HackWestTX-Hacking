@@ -6,46 +6,54 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
 import { ChainFall } from "@/components/effects/ChainFall";
+import { loadMatches } from "@/app/actions";
 import {
   formatEventDate,
   instagramUrl,
+  type Match,
+  type Matches,
   type OrgEvent,
-  type Recommendation,
 } from "@/lib/api";
-import { getRecommendations, loadProfile } from "@/lib/studentSession";
 
 type LoadState =
   | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ready"; recommendations: Recommendation[] };
+  | { status: "error" }
+  | { status: "ready"; matches: Matches };
 
 const EASE = [0.76, 0, 0.24, 1] as const;
 
-export default function RecommendationsPage() {
+// Matches are saved to the account, so Gemini only runs the first time (or
+// after the answers change). React runs effects twice in development, so
+// share one in-flight request between them.
+let pendingMatches: Promise<Matches | null> | null = null;
+
+function loadMatchesOnce() {
+  pendingMatches ??= loadMatches().finally(() => {
+    pendingMatches = null;
+  });
+  return pendingMatches;
+}
+
+export function MatchesView() {
   const router = useRouter();
   const [revealed, setRevealed] = useState(false);
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const profile = loadProfile();
-    if (!profile) {
-      router.replace("/majClass");
-      return;
-    }
-
     let ignore = false;
-    getRecommendations(profile)
-      .then((recommendations) => {
-        if (!ignore) setState({ status: "ready", recommendations });
-      })
-      .catch((error: unknown) => {
-        if (!ignore) {
-          setState({
-            status: "error",
-            message: error instanceof Error ? error.message : String(error),
-          });
+    loadMatchesOnce()
+      .then((matches) => {
+        if (ignore) return;
+        if (matches) {
+          setState({ status: "ready", matches });
+        } else {
+          // No saved answers yet.
+          router.replace("/majClass");
         }
+      })
+      .catch(() => {
+        if (!ignore) setState({ status: "error" });
       });
 
     return () => {
@@ -57,10 +65,6 @@ export default function RecommendationsPage() {
     setState({ status: "loading" });
     setAttempt((n) => n + 1);
   }
-
-  const hasEvents =
-    state.status === "ready" &&
-    state.recommendations.some((rec) => rec.events.length > 0);
 
   return (
     <div className="relative flex min-h-screen w-full flex-1 justify-center bg-orange-200 px-6 py-16">
@@ -99,7 +103,6 @@ export default function RecommendationsPage() {
             <p className="text-slate-600">
               We couldn&apos;t load your matches.
             </p>
-            <p className="text-xs text-slate-500/50">{state.message}</p>
             <button
               type="button"
               onClick={retry}
@@ -111,18 +114,38 @@ export default function RecommendationsPage() {
         )}
 
         {state.status === "ready" && (
-          <div className="flex w-full flex-col gap-4">
-            {state.recommendations.map((rec, i) => (
-              <motion.div
-                key={rec.org_id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-                transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease: EASE }}
-              >
-                <OrganizationCard recommendation={rec} />
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <div className="flex w-full flex-col gap-4">
+              {state.matches.recommendations.map((match, i) => (
+                <motion.div
+                  key={match.org_id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                  transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease: EASE }}
+                >
+                  <OrganizationCard match={match} />
+                </motion.div>
+              ))}
+            </div>
+
+            {state.matches.suggestions.length > 0 && (
+              <div className="flex w-full flex-col gap-4">
+                <h2 className="text-center text-xl font-semibold text-slate-600">
+                  You might also like
+                </h2>
+                {state.matches.suggestions.map((match, i) => (
+                  <motion.div
+                    key={match.org_id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                    transition={{ duration: 0.5, delay: 0.5 + i * 0.1, ease: EASE }}
+                  >
+                    <OrganizationCard match={match} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -130,14 +153,14 @@ export default function RecommendationsPage() {
             href="/majClass"
             className="rounded-full border border-slate-500/30 px-6 py-3 text-slate-500 transition-colors hover:border-slate-500"
           >
-            Start over
+            Edit answers
           </Link>
-          {hasEvents && (
+          {state.status === "ready" && (
             <Link
-              href="/savedEvents"
+              href="/homePage"
               className="rounded-full bg-slate-500 px-6 py-3 text-orange-50 transition-colors hover:bg-slate-600"
             >
-              See all events
+              Go to your home page
             </Link>
           )}
         </div>
@@ -146,12 +169,8 @@ export default function RecommendationsPage() {
   );
 }
 
-function OrganizationCard({
-  recommendation,
-}: {
-  recommendation: Recommendation;
-}) {
-  const { organization, reason, events } = recommendation;
+function OrganizationCard({ match }: { match: Match }) {
+  const { organization, reason, events } = match;
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-slate-500/15 bg-orange-50 p-6">
