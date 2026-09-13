@@ -1,20 +1,18 @@
 import os
+from pathlib import Path
 import psycopg2
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load the database URL from the .env file in the project root.
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 
+# Open a connection to the ConnectX database.
 def get_connection():
-    """Open a connection to the ConnectX database.
+    db_url = os.getenv("TIGER_DATA_URL")
 
-    Raises RuntimeError if TIGER_DATA_URL is missing so a config problem
-    reports itself clearly instead of surfacing as a connection error.
-    """
-    db_url = os.environ.get("TIGER_DATA_URL")
+    # Stop with a clear message instead of a confusing connection error.
     if not db_url:
-        raise RuntimeError(
-            "TIGER_DATA_URL is not set. Copy .env.example to .env and fill in "
-            "your database connection string."
-        )
+        raise ValueError("TIGER_DATA_URL is missing from your .env file.")
+
     return psycopg2.connect(db_url)

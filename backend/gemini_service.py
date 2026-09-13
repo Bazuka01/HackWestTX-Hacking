@@ -6,7 +6,7 @@ from google import genai
 
     
 # Load the API key from .env and create the Gemini client.
-load_dotenv(Path(__file__).parent / ".env")
+load_dotenv(Path(__file__).parent / "back.env")
 api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:

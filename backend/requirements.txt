@@ -4,6 +4,9 @@
 # Gemini API library
 google-genai
 
+# Reads organizations from the TigerData Postgres database
+psycopg2-binary
+
 # Loads environment variables from .env
 python-dotenv
 

@@ -1,53 +1,60 @@
 from contextlib import closing
-
-import psycopg2
-
 from db import get_connection
 
-CREATE_TABLE = """
-CREATE TABLE IF NOT EXISTS campus_orgs (
-    id SERIAL PRIMARY KEY,
-    org_name VARCHAR(255) NOT NULL,
-    category VARCHAR(100),
-    description TEXT,
-    meeting_info TEXT,
-    CONSTRAINT campus_orgs_org_name_key UNIQUE (org_name)
+# Create the orgs table in the same shape as backend/org.json.
+# Column names use snake_case and tag lists are text arrays.
+CREATE_ORGS_TABLE = """
+CREATE TABLE IF NOT EXISTS orgs (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    category TEXT,
+    interest_tags TEXT[] NOT NULL DEFAULT '{}',
+    hobby_tags TEXT[] NOT NULL DEFAULT '{}',
+    culture_tag TEXT,
+    contact TEXT,
+    meeting_time TEXT,
+    instagram_username TEXT UNIQUE
 );
 """
 
-# Brings tables created before the UNIQUE constraint existed up to date.
-# A fresh CREATE TABLE above already builds this index, so this is a no-op there.
-CREATE_UNIQUE_INDEX = """
-CREATE UNIQUE INDEX IF NOT EXISTS campus_orgs_org_name_key
-    ON campus_orgs (org_name);
+# Add the Instagram column to orgs tables created before it existed.
+# A fresh table above already has it, so this does nothing there.
+ADD_INSTAGRAM_COLUMN = """
+ALTER TABLE orgs ADD COLUMN IF NOT EXISTS instagram_username TEXT UNIQUE;
 """
 
-DEDUPE_HINT = """
-The campus_orgs table already contains duplicate org_name values, so the
-unique index could not be created. Remove the duplicates, keeping the
-earliest row of each name:
+# Create the events table in the same shape as backend/events.json.
+# Deleting an organization also deletes its events.
+CREATE_EVENTS_TABLE = """
+CREATE TABLE IF NOT EXISTS events (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    start_time TEXT,
+    end_time TEXT,
+    timezone TEXT NOT NULL DEFAULT 'America/Chicago',
+    location TEXT,
+    status TEXT NOT NULL DEFAULT 'scheduled',
+    details_complete BOOLEAN NOT NULL DEFAULT FALSE,
+    source_username TEXT,
+    source_url TEXT,
+    source_posted_at TIMESTAMPTZ
+);
 
-    DELETE FROM campus_orgs a
-    USING campus_orgs b
-    WHERE a.id > b.id AND a.org_name = b.org_name;
-
-Then run this script again.
+CREATE INDEX IF NOT EXISTS events_org_id_idx ON events (org_id);
 """
 
 
 def create_tables():
     with closing(get_connection()) as conn:
         with conn, conn.cursor() as cursor:
-            cursor.execute(CREATE_TABLE)
-        print("Table 'campus_orgs' is ready.")
+            cursor.execute(CREATE_ORGS_TABLE)
+            cursor.execute(ADD_INSTAGRAM_COLUMN)
+            cursor.execute(CREATE_EVENTS_TABLE)
 
-        try:
-            with conn, conn.cursor() as cursor:
-                cursor.execute(CREATE_UNIQUE_INDEX)
-        except psycopg2.errors.UniqueViolation:
-            print(DEDUPE_HINT)
-        else:
-            print("Unique index on org_name is in place.")
+    print("Tables 'orgs' and 'events' are ready.")
 
 
 if __name__ == "__main__":
