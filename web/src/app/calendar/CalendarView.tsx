@@ -1,6 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { DashboardNav } from "@/components/DashboardNav";
+import {
+  EventDetailsDialog,
+  type EventDetails,
+} from "@/components/EventDetailsDialog";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -8,12 +13,16 @@ export type CalendarEvent = {
   id: string;
   title: string;
   date: string; // yyyy-mm-dd
+  time: string | null;
+  location: string;
+  orgName: string;
   color: string;
 };
 
 export type CalendarOrg = { id: string; name: string; color: string };
 
 type Cell = { day: number; inMonth: boolean; dateKey: string };
+type View = "month" | "week";
 
 function toDateKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -47,8 +56,26 @@ function buildMonthGrid(year: number, month: number): Cell[] {
   return cells;
 }
 
-// This month's events from the student's matched organizations and saved
-// events, colored by organization.
+function buildWeekCells(now: Date) {
+  const diffToMonday = (now.getDay() + 6) % 7;
+  const monday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - diffToMonday
+  );
+
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    return {
+      day: d.getDate(),
+      weekday: WEEKDAYS[d.getDay()],
+      dateKey: toDateKey(d.getFullYear(), d.getMonth(), d.getDate()),
+    };
+  });
+}
+
+// This month's (or week's) events from the student's matched organizations
+// and saved events, colored by organization.
 export function CalendarView({
   events,
   orgs,
@@ -56,18 +83,35 @@ export function CalendarView({
   events: CalendarEvent[];
   orgs: CalendarOrg[];
 }) {
+  const [view, setView] = useState<View>("month");
+  const [selectedEvent, setSelectedEvent] = useState<EventDetails | null>(null);
+
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
   // Local date parts, not toISOString(), which is UTC and would mark
   // tomorrow as today during the evening in Texas.
   const todayKey = toDateKey(year, month, now.getDate());
+
+  const monthCells = buildMonthGrid(year, month);
+  const weekCells = buildWeekCells(now);
+
   const monthLabel = now.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
-
-  const cells = buildMonthGrid(year, month);
+  const weekLabel = (() => {
+    const first = weekCells[0];
+    const last = weekCells[weekCells.length - 1];
+    const fmt = (dateKey: string) => {
+      const [y, m, d] = dateKey.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    };
+    return `${fmt(first.dateKey)} – ${fmt(last.dateKey)}, ${year}`;
+  })();
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
   for (const event of events) {
@@ -76,88 +120,176 @@ export function CalendarView({
     eventsByDate.set(event.date, list);
   }
 
+  function openEvent(event: CalendarEvent) {
+    setSelectedEvent({
+      id: event.id,
+      title: event.title,
+      orgName: event.orgName,
+      orgColor: event.color,
+      startDate: event.date,
+      time: event.time,
+      location: event.location,
+    });
+  }
+
   return (
     <div className="min-h-screen w-full bg-[#0D0D0D]">
       <DashboardNav active="calendar" />
 
-      <div className="mx-auto max-w-5xl px-6 pt-28 pb-16">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-[#F2F0EE]">
-            {monthLabel}
+      <div className="mx-auto max-w-7xl px-6 pt-28 pb-16">
+        <div className="grid grid-cols-3 items-center">
+          <div className="flex items-center gap-4 text-lg font-semibold">
+            <button
+              type="button"
+              onClick={() => setView("month")}
+              className={`cursor-pointer transition-colors ${
+                view === "month" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("week")}
+              className={`cursor-pointer transition-colors ${
+                view === "week" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
+              }`}
+            >
+              Weekly
+            </button>
+          </div>
+
+          <h1 className="text-center text-2xl font-bold tracking-tight text-[#F2F0EE]">
+            {view === "month" ? monthLabel : weekLabel}
           </h1>
-          <div className="flex flex-wrap gap-2">
+
+          <div className="flex flex-wrap justify-end gap-3">
             {orgs.map((org) => (
               <div
                 key={org.id}
-                className="flex items-center gap-1.5 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-3 py-1 text-xs font-medium text-[#F2F0EE]"
+                className="flex items-center gap-1.5 text-sm font-medium text-[#F2F0EE]"
               >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: org.color }}
-                />
+                <span className="h-2.5 w-2.5" style={{ backgroundColor: org.color }} />
                 {org.name}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-lg border border-[#2E2E2E]">
-          <div className="grid grid-cols-7 border-b border-[#2E2E2E] bg-[#1A1A1A]">
-            {WEEKDAYS.map((day) => (
-              <div
-                key={day}
-                className="p-2 text-center text-xs font-semibold text-[#8C8785]"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7">
-            {cells.map((cell, i) => {
-              const dayEvents = cell.inMonth
-                ? (eventsByDate.get(cell.dateKey) ?? [])
-                : [];
-              const isToday = cell.inMonth && cell.dateKey === todayKey;
-
-              return (
+        {view === "month" ? (
+          <div className="mt-6 overflow-hidden rounded-lg border border-[#2E2E2E]">
+            <div className="grid grid-cols-7 border-b border-[#2E2E2E] bg-[#1A1A1A]">
+              {WEEKDAYS.map((day) => (
                 <div
-                  key={i}
-                  className={`min-h-[96px] border-r border-b border-[#2E2E2E] p-1.5 [&:nth-child(7n)]:border-r-0 ${
-                    cell.inMonth ? "" : "opacity-30"
-                  }`}
+                  key={day}
+                  className="p-2 text-center text-xs font-semibold text-[#8C8785]"
                 >
-                  <div
-                    className={`mb-1 flex h-5 w-5 items-center justify-center rounded-full text-xs ${
-                      isToday
-                        ? "bg-[#C8102E] font-semibold text-white"
-                        : "text-[#8C8785]"
-                    }`}
-                  >
-                    {cell.day}
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    {dayEvents.slice(0, 2).map((event) => (
-                      <div
-                        key={event.id}
-                        title={event.title}
-                        className="truncate rounded px-1 py-0.5 text-[10px] font-medium text-[#F2F0EE]"
-                        style={{ backgroundColor: `${event.color}33` }}
-                      >
-                        {event.title}
-                      </div>
-                    ))}
-                    {dayEvents.length > 2 && (
-                      <div className="text-[10px] text-[#8C8785]">
-                        +{dayEvents.length - 2} more
-                      </div>
-                    )}
-                  </div>
+                  {day}
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 [&>*:nth-child(7n)]:border-r-0">
+              {monthCells.map((cell, i) => (
+                <DayCell
+                  key={i}
+                  label={cell.day}
+                  dayEvents={cell.inMonth ? (eventsByDate.get(cell.dateKey) ?? []) : []}
+                  isToday={cell.inMonth && cell.dateKey === todayKey}
+                  faded={!cell.inMonth}
+                  minHeight={130}
+                  maxEvents={2}
+                  eventTextClass="text-[11px]"
+                  onSelectEvent={openEvent}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-6 overflow-hidden rounded-lg border border-[#2E2E2E]">
+            <div className="grid grid-cols-5 border-b border-[#2E2E2E] bg-[#1A1A1A]">
+              {weekCells.map((cell) => (
+                <div
+                  key={cell.dateKey}
+                  className="p-2 text-center text-xs font-semibold text-[#8C8785]"
+                >
+                  {cell.weekday}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-5 [&>*:nth-child(5n)]:border-r-0">
+              {weekCells.map((cell) => (
+                <DayCell
+                  key={cell.dateKey}
+                  label={cell.day}
+                  dayEvents={eventsByDate.get(cell.dateKey) ?? []}
+                  isToday={cell.dateKey === todayKey}
+                  faded={false}
+                  minHeight={240}
+                  maxEvents={5}
+                  eventTextClass="text-sm"
+                  onSelectEvent={openEvent}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <EventDetailsDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+    </div>
+  );
+}
+
+function DayCell({
+  label,
+  dayEvents,
+  isToday,
+  faded,
+  minHeight,
+  maxEvents,
+  eventTextClass,
+  onSelectEvent,
+}: {
+  label: number;
+  dayEvents: CalendarEvent[];
+  isToday: boolean;
+  faded: boolean;
+  minHeight: number;
+  maxEvents: number;
+  eventTextClass: string;
+  onSelectEvent: (event: CalendarEvent) => void;
+}) {
+  return (
+    <div
+      style={{ minHeight }}
+      className={`flex flex-col gap-1 border-r border-b border-[#2E2E2E] p-2 ${
+        faded ? "opacity-30" : ""
+      } ${isToday ? "bg-white/10" : ""}`}
+    >
+      <div className="mb-1 text-sm whitespace-nowrap text-[#8C8785]">{label}</div>
+      <div className="flex flex-col gap-1">
+        {dayEvents.slice(0, maxEvents).map((event) => (
+          <button
+            key={event.id}
+            type="button"
+            title={event.title}
+            onClick={() => onSelectEvent(event)}
+            className={`flex cursor-pointer items-center gap-1.5 text-left font-medium text-[#F2F0EE] transition-colors hover:text-[#C8102E] ${eventTextClass}`}
+          >
+            <span
+              className="h-1.5 w-1.5 shrink-0"
+              style={{ backgroundColor: event.color }}
+            />
+            <span className="truncate">{event.title}</span>
+          </button>
+        ))}
+        {dayEvents.length > maxEvents && (
+          <div className="text-[10px] text-[#8C8785]">
+            +{dayEvents.length - maxEvents} more
+          </div>
+        )}
       </div>
     </div>
   );

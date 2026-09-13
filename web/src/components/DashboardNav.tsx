@@ -7,7 +7,7 @@ type ActiveTab = "home" | "saved" | "calendar";
 
 function tabClass(isActive: boolean) {
   return `flex items-center rounded px-2.5 py-2 text-sm font-semibold transition-colors sm:px-3.5 ${
-    isActive ? "bg-[#C8102E] text-white" : "text-[#8C8785] hover:text-[#C8102E]"
+    isActive ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
   }`;
 }
 

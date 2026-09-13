@@ -9,7 +9,10 @@ import { ChevronDown } from "lucide-react";
 import { DashboardNav } from "@/components/DashboardNav";
 import { unsaveEvent } from "@/app/actions";
 import { formatEventDate, type SavedEvent } from "@/lib/api";
-import { EventDetailsDialog, type EventDetails } from "./EventDetailsDialog";
+import {
+  EventDetailsDialog,
+  type EventDetails,
+} from "@/components/EventDetailsDialog";
 
 gsap.registerPlugin(InertiaPlugin);
 
