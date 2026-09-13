@@ -2,25 +2,12 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Clock, MapPin, X } from "lucide-react";
+import { AddToCalendar } from "@/components/AddToCalendar";
+import { useLocale, useT } from "@/components/LanguageProvider";
+import { formatEventDate } from "@/lib/api";
+import type { CalendarEntry } from "@/lib/calendarLinks";
 
-export type EventDetails = {
-  id: string;
-  title: string;
-  orgName: string;
-  orgColor?: string;
-  startDate: string; // yyyy-mm-dd
-  time: string | null;
-  location: string;
-};
-
-function formatFullDate(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
+export type EventDetails = CalendarEntry & { orgColor?: string };
 
 export function EventDetailsDialog({
   event,
@@ -31,6 +18,10 @@ export function EventDetailsDialog({
   onClose: () => void;
   onRemove?: (eventId: string) => void;
 }) {
+  const t = useT();
+  const locale = useLocale();
+  const time = event ? [event.startTime, event.endTime].filter(Boolean).join(" – ") : "";
+
   return (
     <Dialog.Root
       open={event !== null}
@@ -40,7 +31,7 @@ export function EventDetailsDialog({
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/70" />
         <Dialog.Content className="fixed top-1/2 left-1/2 z-40 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] px-8 py-7 text-center shadow-lg outline-none">
           <Dialog.Close
-            aria-label="Close"
+            aria-label={t.common.close}
             className="absolute top-3 right-3 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[#8C8785] transition-colors hover:text-[#C8102E]"
           >
             <X className="h-4 w-4" strokeWidth={2.5} />
@@ -59,31 +50,38 @@ export function EventDetailsDialog({
                 {event.title}
               </Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-[#8C8785]">
-                {formatFullDate(event.startDate)}
+                {formatEventDate(event.startDate, locale, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
               </Dialog.Description>
 
               <div className="mt-5 flex flex-col gap-2 text-left text-sm text-[#F2F0EE]">
-                {event.time && (
+                {time && (
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 shrink-0 text-[#C8102E]" />
-                    {event.time}
+                    {time}
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 shrink-0 text-[#C8102E]" />
-                  {event.location}
+                  {event.location ?? t.common.locationTba}
                 </div>
               </div>
 
-              {onRemove && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(event.id)}
-                  className="mt-6 w-full cursor-pointer rounded-full border border-[#2E2E2E] py-2.5 text-sm font-semibold text-[#8C8785] transition-colors hover:border-[#C8102E] hover:text-[#C8102E]"
-                >
-                  Remove from saved
-                </button>
-              )}
+              <div className="mt-6 flex flex-col gap-2">
+                <AddToCalendar entry={event} />
+                {onRemove && (
+                  <button
+                    type="button"
+                    onClick={() => onRemove(event.id)}
+                    className="w-full cursor-pointer rounded-full border border-[#2E2E2E] py-2.5 text-sm font-semibold text-[#8C8785] transition-colors hover:border-[#C8102E] hover:text-[#C8102E]"
+                  >
+                    {t.saved.remove}
+                  </button>
+                )}
+              </div>
             </>
           )}
         </Dialog.Content>

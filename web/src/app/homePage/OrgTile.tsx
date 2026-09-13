@@ -1,5 +1,9 @@
-import { ArrowUpRight } from "lucide-react";
+"use client";
+
+import { ArrowUpRight, EyeOff } from "lucide-react";
+import { useLocale, useT } from "@/components/LanguageProvider";
 import { formatEventDate, instagramUrl, type Match } from "@/lib/api";
+import { labelFor } from "@/lib/i18n";
 import { OTHER_ORG_COLOR } from "@/lib/matchColors";
 
 // A matched organization: why it fits, plus its next event.
@@ -7,11 +11,16 @@ export function OrgTile({
   match,
   color = OTHER_ORG_COLOR,
   featured,
+  onHide,
 }: {
   match: Match;
   color?: string;
   featured?: boolean;
+  // "Not interested"
+  onHide: () => void;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const { organization, reason, events } = match;
   const nextEvent = events[0];
 
@@ -21,7 +30,17 @@ export function OrgTile({
         featured ? "p-6" : "p-4"
       }`}
     >
-      <div>
+      <button
+        type="button"
+        onClick={onHide}
+        aria-label={t.common.notInterested}
+        title={t.common.notInterested}
+        className="absolute top-3 right-3 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[#8C8785] transition-colors hover:bg-[#2E2E2E] hover:text-[#F2F0EE]"
+      >
+        <EyeOff className="h-4 w-4" />
+      </button>
+
+      <div className="pr-8">
         {organization.category && (
           <div
             className="mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium text-[#F2F0EE]"
@@ -31,7 +50,7 @@ export function OrgTile({
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: color }}
             />
-            {organization.category}
+            {labelFor(t.options.categories, organization.category)}
           </div>
         )}
         <div
@@ -46,7 +65,7 @@ export function OrgTile({
         </p>
         {featured && organization.meetingTime && (
           <p className="mt-2 text-sm text-[#8C8785]">
-            Meets {organization.meetingTime}
+            {t.home.meets(organization.meetingTime)}
           </p>
         )}
       </div>
@@ -54,8 +73,8 @@ export function OrgTile({
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-[#8C8785]">
         <span>
           {nextEvent
-            ? `Next: ${formatEventDate(nextEvent.start_date)} · ${nextEvent.title}`
-            : "No upcoming events yet"}
+            ? t.home.nextEvent(formatEventDate(nextEvent.start_date, locale), nextEvent.title)
+            : t.home.noUpcoming}
         </span>
         {organization.instagramUsername && (
           <a

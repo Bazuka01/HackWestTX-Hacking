@@ -1,13 +1,17 @@
 "use server";
 
+import { refresh } from "next/cache";
 import {
   BackendError,
+  deleteHiddenOrg,
   deleteSavedEvent,
   postMatches,
+  putHiddenOrg,
   putProfile,
   putSavedEvent,
 } from "@/lib/account";
 import type { Matches, StudentProfile } from "@/lib/api";
+import { getLanguage } from "@/lib/serverLanguage";
 
 // Server Actions the onboarding and dashboard pages call. Each one reads the
 // Auth0 session itself (inside lib/account.ts), since these can be invoked
@@ -23,14 +27,22 @@ export async function saveProfile(profile: StudentProfile) {
   });
 }
 
-// Null when the student hasn't saved their answers yet.
+// Null when the student hasn't saved their answers yet. Gemini writes the
+// reasons in the language the student picked.
 export async function loadMatches(): Promise<Matches | null> {
   try {
-    return await postMatches();
+    return await postMatches({ language: await getLanguage() });
   } catch (error) {
     if (error instanceof BackendError && error.status === 409) return null;
     throw error;
   }
+}
+
+// Ask Gemini for different organizations without changing the answers, then
+// refresh the page that asked so it shows them.
+export async function getNewPicks() {
+  await postMatches({ refresh: true, language: await getLanguage() });
+  refresh();
 }
 
 export async function saveEvent(eventId: string) {
@@ -39,4 +51,13 @@ export async function saveEvent(eventId: string) {
 
 export async function unsaveEvent(eventId: string) {
   await deleteSavedEvent(String(eventId));
+}
+
+// "Not interested"
+export async function hideOrg(orgId: string) {
+  await putHiddenOrg(String(orgId));
+}
+
+export async function unhideOrg(orgId: string) {
+  await deleteHiddenOrg(String(orgId));
 }

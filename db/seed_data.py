@@ -1,4 +1,5 @@
 import json
+import re
 from contextlib import closing
 from pathlib import Path
 from psycopg2.extras import execute_values
@@ -25,7 +26,8 @@ events = load_backend_json("events.json")
 # never shift when an organization is added or removed.
 # Categories use the same names as backend/org.json, with extra ones for
 # groups org.json has no category for (such as Law or Religious/Spiritual).
-# Tags, contact, and meeting time stay empty until real data is collected.
+# Tags are generated below; contact and meeting time stay empty until real
+# data is collected.
 CATALOG_ORGS = [
     ("org_036", "A Dog's Way Home", "Community Service"),
     ("org_037", "Adventist Christian Fellowship", "Religious/Spiritual"),
@@ -445,9 +447,98 @@ CATALOG_ORGS = [
     ("org_451", "Zamo Raiders", "Hobbies/Special Interest"),
 ]
 
-# Upsert on id so rerunning this script never duplicates rows. Culture tag,
-# contact, and meeting time are not overwritten, and an Instagram username is
-# only replaced when orgmap.json has one, so values filled in by hand are kept.
+# Tags for the catalog orgs, in the same style as backend/org.json: broad
+# interest tags come from the category, and specific hobby tags from words in
+# the organization's name. Tag names match the options on the interest
+# checklist (lowercased), so students' picks line up with them.
+CATEGORY_INTEREST_TAGS = {
+    "Agricultural Sciences & Natural Resources": ["agriculture", "environment", "outdoors", "animals"],
+    "Arts & Sciences": ["stem", "research", "academic"],
+    "Business": ["business", "entrepreneurship", "finance"],
+    "Engineering / Computer Science": ["technology", "stem", "engineering"],
+    "Health & Human Sciences": ["health", "medicine", "wellness"],
+    "Culture/Nationality": ["culture", "community", "identity"],
+    "Gym/Fitness": ["fitness"],
+    "Outdoor Activities": ["outdoors"],
+    "Music/Art": ["arts"],
+    "Gaming": ["gaming"],
+    "Community Service": ["volunteering", "community service"],
+    "Education": ["academic", "mentorship"],
+    "Law": ["law", "politics"],
+    "Media & Communication": ["media", "writing"],
+    "Veterinary Medicine": ["animals", "medicine", "health"],
+    "Religious/Spiritual": ["faith", "community"],
+    "Political/Advocacy": ["politics", "inclusion"],
+    "Sports": ["sports", "fitness"],
+    "Hobbies/Special Interest": ["community"],
+    "Honor Society": ["academic", "leadership"],
+    "Student Government/Leadership": ["leadership", "community"],
+    "Spirit/Traditions": ["school spirit", "community"],
+    "Military/Veterans": ["military", "leadership"],
+}
+
+# (pattern matched against the name, hobby tags to add)
+NAME_HOBBY_TAGS = [
+    (r"danc|ballroom|hip hop|bollywood|kahaani|taara|kpop", ["dance", "performance"]),
+    (r"a cappella|choir|choral|singing|vocal", ["singing", "music", "performance"]),
+    (r"theat|improv|jinxx", ["theater", "performance"]),
+    (r"\bband\b|trumpet|horn society|string|music|goin' band", ["music", "performance"]),
+    (r"photo", ["photography"]),
+    (r"film|movie|creative media|script", ["film"]),
+    (r"journal|toreador|rhetoric|law review|book|english society|script|bank lawyer", ["writing"]),
+    (r"soccer|futbol|volleyball|rugby|lacrosse|hockey|baseball|tennis|golf|swim|polo|badminton|frisbee|gymnastic|equestrian|fencing|sport club", ["sports"]),
+    (r"climb|backpack", ["hiking", "camping"]),
+    (r"fishing|archery|skeet|rifle|disc golf|skyraiders|wildlife society|range management|fire ecology", ["outdoors"]),
+    (r"powerlifting|calisthenics", ["weightlifting", "gym"]),
+    (r"\bmma\b|martial", ["gym"]),
+    (r"chess|ajedraiders|knight raiders|board game|\brpg\b|yugioh|pok[eé]mon|magic club", ["gaming"]),
+    (r"esports|video game", ["esports", "video games"]),
+    (r"robot|racing|aerospace|computing|developer|cyber|codepath|colorstack|hacks|electrical and electronics|high performance computing", ["technology"]),
+    (r"pre-(med|dental|nursing|pharmacy|optometry|physical|occupational|athletic|health)|medical|medicine|dental|physician|health|emergency medical", ["health", "medicine"]),
+    (r"volunteer|service|pantry|recycling|unicef|special olympics|best buddies|rotaract|casa\b|outreach|donation|miracle pennies|habitat", ["volunteering", "community service"]),
+    (r"mentor|tutor|teach|ambassador|diplomat", ["mentorship"]),
+    (r"women|minorit|black|hispanic|latin|asian|african|gender|inclusi|accessib|naacp|signing|multicultural|non-traditional|transfer", ["inclusion", "identity"]),
+    (r"entrepreneur|startup", ["entrepreneurship"]),
+    (r"financ|investment|banking|real estate", ["finance"]),
+    (r"environment|renewable|wildlife|botany|fire ecology|recycling|toxicolog|fisheries|geograph|meteorolog", ["environment"]),
+    (r"animal|\bpets\b|cat coalition|veterinar|equine|dog|shelter|meat|livestock|cattle|horse|wool|dairy|block & bridle", ["animals"]),
+    (r"research|biotech|biochem|cancer|microbiology|astronomy|physicists|forensic", ["research"]),
+    (r"meditation|mindmatters|wellness|nutrition|tobacco", ["wellness"]),
+    (r"democrat|republican|conservative|\bvote\b|turning point|collective action|raiders for life|reproductive|enlightened women", ["politics"]),
+    (r"leader|government|executive|dean's|president's|activities board|alumni board|councils|involvement", ["leadership"]),
+    (r"christian|catholic|baptist|ministry|fellowship|church|hillel|chabad|jewish|muslim|latter-day|lutheran|episcopal|orthodox|campus crusade|navigators|wesley|secular|delight|redeemer|tree of restoration|student mobilization|foundation retreat|mantra|\bthe way\b|journey at", ["faith"]),
+]
+
+# (pattern matched against the name, culture tag). The first match wins.
+NAME_CULTURE_TAGS = [
+    (r"hispanic|latin|español|céfiro|costa rica", "Hispanic/Latino"),
+    (r"caribbean", "Caribbean"),
+    (r"black|african|nigerian|ghana|east africa|naacp", "African/Black"),
+    (r"filipino", "Filipino"),
+    (r"asian|korean|japanese|chinese|bangladeshi|nepal|sri lankan|bollywood|kahaani|taara|kpop", "Asian/Pacific Islander"),
+    (r"american indian", "Native American"),
+    (r"turkish|mediterranean|ukrainian|russian|slavic|french", "International"),
+]
+
+
+def generate_tags(name, category):
+    interest_tags = list(CATEGORY_INTEREST_TAGS.get(category, []))
+    hobby_tags = []
+    for pattern, tags in NAME_HOBBY_TAGS:
+        if re.search(pattern, name, re.IGNORECASE):
+            hobby_tags += [tag for tag in tags if tag not in hobby_tags + interest_tags]
+
+    culture_tag = next(
+        (tag for pattern, tag in NAME_CULTURE_TAGS if re.search(pattern, name, re.IGNORECASE)),
+        None,
+    )
+    return interest_tags, hobby_tags, culture_tag
+
+
+# Upsert on id so rerunning this script never duplicates rows. Contact and
+# meeting time are not overwritten, a culture tag only fills an empty one, and
+# an Instagram username is only replaced when orgmap.json has one, so values
+# filled in by hand are kept.
 INSERT_ORGS = """
 INSERT INTO orgs (id, name, category, interest_tags, hobby_tags, culture_tag, contact, meeting_time, instagram_username)
 VALUES %s
@@ -456,6 +547,7 @@ ON CONFLICT (id) DO UPDATE SET
     category = EXCLUDED.category,
     interest_tags = EXCLUDED.interest_tags,
     hobby_tags = EXCLUDED.hobby_tags,
+    culture_tag = COALESCE(orgs.culture_tag, EXCLUDED.culture_tag),
     instagram_username = COALESCE(EXCLUDED.instagram_username, orgs.instagram_username)
 """
 
@@ -507,7 +599,7 @@ def seed_database():
         for org in tagged_orgs
     ]
     org_rows += [
-        (org_id, name, category, [], [], None, None, None, usernames_by_org.get(org_id))
+        (org_id, name, category, *generate_tags(name, category), None, None, usernames_by_org.get(org_id))
         for org_id, name, category in CATALOG_ORGS
     ]
 

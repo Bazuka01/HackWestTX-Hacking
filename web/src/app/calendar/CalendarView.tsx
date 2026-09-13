@@ -6,18 +6,10 @@ import {
   EventDetailsDialog,
   type EventDetails,
 } from "@/components/EventDetailsDialog";
+import { useLocale, useT } from "@/components/LanguageProvider";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-export type CalendarEvent = {
-  id: string;
-  title: string;
-  date: string; // yyyy-mm-dd
-  time: string | null;
-  location: string;
-  orgName: string;
-  color: string;
-};
+// An event plus its organization's color.
+export type CalendarEvent = EventDetails & { color: string };
 
 export type CalendarOrg = { id: string; name: string; color: string };
 
@@ -26,6 +18,17 @@ type View = "month" | "week";
 
 function toDateKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+// Short weekday names in the student's language, Sunday first.
+function weekdayNames(locale: string) {
+  // January 4, 1970 was a Sunday.
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.UTC(1970, 0, 4 + i)).toLocaleDateString(locale, {
+      weekday: "short",
+      timeZone: "UTC",
+    })
+  );
 }
 
 function buildMonthGrid(year: number, month: number): Cell[] {
@@ -56,7 +59,7 @@ function buildMonthGrid(year: number, month: number): Cell[] {
   return cells;
 }
 
-function buildWeekCells(now: Date) {
+function buildWeekCells(now: Date, weekdays: string[]) {
   const diffToMonday = (now.getDay() + 6) % 7;
   const monday = new Date(
     now.getFullYear(),
@@ -68,7 +71,7 @@ function buildWeekCells(now: Date) {
     const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
     return {
       day: d.getDate(),
-      weekday: WEEKDAYS[d.getDay()],
+      weekday: weekdays[d.getDay()],
       dateKey: toDateKey(d.getFullYear(), d.getMonth(), d.getDate()),
     };
   });
@@ -83,6 +86,8 @@ export function CalendarView({
   events: CalendarEvent[];
   orgs: CalendarOrg[];
 }) {
+  const t = useT();
+  const locale = useLocale();
   const [view, setView] = useState<View>("month");
   const [selectedEvent, setSelectedEvent] = useState<EventDetails | null>(null);
 
@@ -92,11 +97,12 @@ export function CalendarView({
   // Local date parts, not toISOString(), which is UTC and would mark
   // tomorrow as today during the evening in Texas.
   const todayKey = toDateKey(year, month, now.getDate());
+  const weekdays = weekdayNames(locale);
 
   const monthCells = buildMonthGrid(year, month);
-  const weekCells = buildWeekCells(now);
+  const weekCells = buildWeekCells(now, weekdays);
 
-  const monthLabel = now.toLocaleDateString("en-US", {
+  const monthLabel = now.toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
   });
@@ -105,7 +111,7 @@ export function CalendarView({
     const last = weekCells[weekCells.length - 1];
     const fmt = (dateKey: string) => {
       const [y, m, d] = dateKey.split("-").map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+      return new Date(y, m - 1, d).toLocaleDateString(locale, {
         month: "short",
         day: "numeric",
       });
@@ -115,21 +121,13 @@ export function CalendarView({
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
   for (const event of events) {
-    const list = eventsByDate.get(event.date) ?? [];
+    const list = eventsByDate.get(event.startDate) ?? [];
     list.push(event);
-    eventsByDate.set(event.date, list);
+    eventsByDate.set(event.startDate, list);
   }
 
   function openEvent(event: CalendarEvent) {
-    setSelectedEvent({
-      id: event.id,
-      title: event.title,
-      orgName: event.orgName,
-      orgColor: event.color,
-      startDate: event.date,
-      time: event.time,
-      location: event.location,
-    });
+    setSelectedEvent({ ...event, orgColor: event.color });
   }
 
   return (
@@ -146,7 +144,7 @@ export function CalendarView({
                 view === "month" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
               }`}
             >
-              Monthly
+              {t.calendar.monthly}
             </button>
             <button
               type="button"
@@ -155,11 +153,11 @@ export function CalendarView({
                 view === "week" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
               }`}
             >
-              Weekly
+              {t.calendar.weekly}
             </button>
           </div>
 
-          <h1 className="text-center text-2xl font-bold tracking-tight text-[#F2F0EE]">
+          <h1 className="text-center text-2xl font-bold tracking-tight text-[#F2F0EE] first-letter:uppercase">
             {view === "month" ? monthLabel : weekLabel}
           </h1>
 
@@ -179,7 +177,7 @@ export function CalendarView({
         {view === "month" ? (
           <div className="mt-6 overflow-hidden rounded-lg border border-[#2E2E2E]">
             <div className="grid grid-cols-7 border-b border-[#2E2E2E] bg-[#1A1A1A]">
-              {WEEKDAYS.map((day) => (
+              {weekdays.map((day) => (
                 <div
                   key={day}
                   className="p-2 text-center text-xs font-semibold text-[#8C8785]"
@@ -261,6 +259,8 @@ function DayCell({
   eventTextClass: string;
   onSelectEvent: (event: CalendarEvent) => void;
 }) {
+  const t = useT();
+
   return (
     <div
       style={{ minHeight }}
@@ -287,7 +287,7 @@ function DayCell({
         ))}
         {dayEvents.length > maxEvents && (
           <div className="text-[10px] text-[#8C8785]">
-            +{dayEvents.length - maxEvents} more
+            {t.calendar.more(dayEvents.length - maxEvents)}
           </div>
         )}
       </div>

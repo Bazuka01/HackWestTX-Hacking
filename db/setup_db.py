@@ -95,6 +95,17 @@ CREATE TABLE IF NOT EXISTS saved_events (
 );
 """
 
+# Organizations each user marked "Not interested". They're left out of the
+# user's matches and of new picks until the user shows them again.
+CREATE_HIDDEN_ORGS_TABLE = """
+CREATE TABLE IF NOT EXISTS hidden_orgs (
+    user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+    hidden_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, org_id)
+);
+"""
+
 
 def create_tables():
     with closing(get_connection()) as conn:
@@ -106,10 +117,11 @@ def create_tables():
             cursor.execute(CREATE_STUDENT_PROFILES_TABLE)
             cursor.execute(CREATE_USER_MATCHES_TABLE)
             cursor.execute(CREATE_SAVED_EVENTS_TABLE)
+            cursor.execute(CREATE_HIDDEN_ORGS_TABLE)
 
     print(
         "Tables 'orgs', 'events', 'users', 'student_profiles', "
-        "'user_matches' and 'saved_events' are ready."
+        "'user_matches', 'saved_events' and 'hidden_orgs' are ready."
     )
 
 

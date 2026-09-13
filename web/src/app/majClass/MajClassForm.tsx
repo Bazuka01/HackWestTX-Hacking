@@ -6,63 +6,12 @@ import { motion } from "motion/react";
 import { Fade } from "@/components/effects/Fade";
 import { ChainCover } from "@/components/effects/ChainCover";
 import { Dropdown } from "@/components/Dropdown";
+import { useT } from "@/components/LanguageProvider";
 import { StepIndicator } from "@/components/StepIndicator";
 import type { StudentProfile } from "@/lib/api";
+import { labelFor } from "@/lib/i18n";
+import { CLASS_YEARS, ETHNICITIES, MAJORS } from "@/lib/options";
 import { saveProfileDraft } from "@/lib/profileDraft";
-
-const MAJORS = [
-  "Computer Science",
-  "Business Administration",
-  "Biology",
-  "Psychology",
-  "Nursing",
-  "Mechanical Engineering",
-  "Electrical Engineering",
-  "Civil Engineering",
-  "Computer Engineering",
-  "Economics",
-  "Finance",
-  "Accounting",
-  "Marketing",
-  "Communications",
-  "English",
-  "Political Science",
-  "Sociology",
-  "Criminal Justice",
-  "Education",
-  "Kinesiology",
-  "Biomedical Engineering",
-  "Chemistry",
-  "Physics",
-  "Mathematics",
-  "Environmental Science",
-  "History",
-  "Graphic Design",
-  "Architecture",
-  "Public Health",
-  "International Relations",
-  "Journalism",
-  "Music",
-  "Art",
-  "Philosophy",
-  "Anthropology",
-  "Data Science",
-  "Information Technology",
-  "Chemical Engineering",
-];
-
-const CLASSIFICATIONS = ["Freshman", "Sophomore", "Junior", "Senior"];
-
-const ETHNICITIES = [
-  "American Indian or Alaska Native",
-  "Asian",
-  "Black or African American",
-  "Hispanic or Latino",
-  "Native Hawaiian or Other Pacific Islander",
-  "White",
-  "Two or More Races",
-  "Prefer not to say",
-];
 
 // savedProfile pre-fills the answers when a student comes back to edit them.
 export function MajClassForm({
@@ -71,6 +20,7 @@ export function MajClassForm({
   savedProfile: StudentProfile | null;
 }) {
   const router = useRouter();
+  const t = useT();
   const [revealed, setRevealed] = useState(false);
   const [major, setMajor] = useState(savedProfile?.major ?? "");
   const [classification, setClassification] = useState(
@@ -104,7 +54,7 @@ export function MajClassForm({
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <h1 className="text-center text-3xl font-semibold tracking-tight text-slate-600">
-          Help Us Connect You
+          {t.onboarding.heading}
         </h1>
 
         <div className="flex w-full flex-col items-center gap-6">
@@ -114,7 +64,8 @@ export function MajClassForm({
                 value={major}
                 onChange={setMajor}
                 options={MAJORS}
-                placeholder="Select your major"
+                getLabel={(value) => labelFor(t.options.majors, value)}
+                placeholder={t.onboarding.majorPlaceholder}
                 searchable
                 allowCustom
               />
@@ -124,22 +75,24 @@ export function MajClassForm({
               <Dropdown
                 value={classification}
                 onChange={setClassification}
-                options={CLASSIFICATIONS}
-                placeholder="Classification"
+                options={CLASS_YEARS}
+                getLabel={(value) => labelFor(t.options.classYears, value)}
+                placeholder={t.onboarding.classPlaceholder}
               />
             </div>
           </div>
 
           <div className="w-full sm:max-w-xs">
             <div className="mb-2 text-sm text-slate-500/50">
-              Ethnicity{" "}
-              <span className="text-slate-500/30">(not required)</span>
+              {t.onboarding.ethnicityLabel}{" "}
+              <span className="text-slate-500/30">{t.onboarding.optional}</span>
             </div>
             <Dropdown
               value={ethnicity}
               onChange={setEthnicity}
               options={ETHNICITIES}
-              placeholder="Select ethnicity"
+              getLabel={(value) => labelFor(t.options.ethnicities, value)}
+              placeholder={t.onboarding.ethnicityPlaceholder}
             />
           </div>
 
@@ -152,7 +105,7 @@ export function MajClassForm({
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
             className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-slate-500 px-6 py-3 text-orange-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next
+            {t.common.next}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"

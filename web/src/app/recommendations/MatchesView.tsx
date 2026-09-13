@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
+import { AddToCalendar } from "@/components/AddToCalendar";
 import { ChainFall } from "@/components/effects/ChainFall";
+import { useLocale, useT } from "@/components/LanguageProvider";
 import { loadMatches } from "@/app/actions";
 import {
   formatEventDate,
@@ -14,6 +16,8 @@ import {
   type Matches,
   type OrgEvent,
 } from "@/lib/api";
+import { calendarEntry } from "@/lib/calendarLinks";
+import { labelFor } from "@/lib/i18n";
 
 type LoadState =
   | { status: "loading" }
@@ -36,6 +40,7 @@ function loadMatchesOnce() {
 
 export function MatchesView() {
   const router = useRouter();
+  const t = useT();
   const [revealed, setRevealed] = useState(false);
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -78,11 +83,9 @@ export function MatchesView() {
       >
         <div className="flex flex-col items-center gap-3 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-600">
-            Your Matches
+            {t.matches.title}
           </h1>
-          <p className="text-slate-500/50">
-            Organizations picked for your major and interests.
-          </p>
+          <p className="text-slate-500/50">{t.matches.subtitle}</p>
         </div>
 
         {state.status === "loading" && (
@@ -92,23 +95,19 @@ export function MatchesView() {
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
             />
-            <p className="text-sm text-slate-500/60">
-              Finding your organizations. This can take a few seconds.
-            </p>
+            <p className="text-sm text-slate-500/60">{t.matches.loading}</p>
           </div>
         )}
 
         {state.status === "error" && (
           <div className="flex flex-col items-center gap-4 py-12 text-center">
-            <p className="text-slate-600">
-              We couldn&apos;t load your matches.
-            </p>
+            <p className="text-slate-600">{t.matches.loadError}</p>
             <button
               type="button"
               onClick={retry}
               className="cursor-pointer rounded-full bg-slate-500 px-6 py-3 text-orange-50 transition-colors hover:bg-slate-600"
             >
-              Try again
+              {t.common.tryAgain}
             </button>
           </div>
         )}
@@ -131,7 +130,7 @@ export function MatchesView() {
             {state.matches.suggestions.length > 0 && (
               <div className="flex w-full flex-col gap-4">
                 <h2 className="text-center text-xl font-semibold text-slate-600">
-                  You might also like
+                  {t.matches.alsoLike}
                 </h2>
                 {state.matches.suggestions.map((match, i) => (
                   <motion.div
@@ -153,14 +152,14 @@ export function MatchesView() {
             href="/majClass"
             className="rounded-full border border-slate-500/30 px-6 py-3 text-slate-500 transition-colors hover:border-slate-500"
           >
-            Edit answers
+            {t.matches.editAnswers}
           </Link>
           {state.status === "ready" && (
             <Link
               href="/homePage"
               className="rounded-full bg-slate-500 px-6 py-3 text-orange-50 transition-colors hover:bg-slate-600"
             >
-              Go to your home page
+              {t.matches.goHome}
             </Link>
           )}
         </div>
@@ -170,6 +169,7 @@ export function MatchesView() {
 }
 
 function OrganizationCard({ match }: { match: Match }) {
+  const t = useT();
   const { organization, reason, events } = match;
 
   return (
@@ -177,7 +177,7 @@ function OrganizationCard({ match }: { match: Match }) {
       <div className="flex flex-col gap-1">
         {organization.category && (
           <span className="text-xs uppercase tracking-wide text-slate-500/50">
-            {organization.category}
+            {labelFor(t.options.categories, organization.category)}
           </span>
         )}
         <h2 className="text-xl font-semibold text-slate-600">
@@ -200,21 +200,19 @@ function OrganizationCard({ match }: { match: Match }) {
 
       {(organization.meetingTime || organization.contact) && (
         <div className="flex flex-col gap-1 text-sm text-slate-500/70">
-          {organization.meetingTime && <p>Meets: {organization.meetingTime}</p>}
-          {organization.contact && <p>Contact: {organization.contact}</p>}
+          {organization.meetingTime && <p>{t.matches.meets(organization.meetingTime)}</p>}
+          {organization.contact && <p>{t.matches.contact(organization.contact)}</p>}
         </div>
       )}
 
       <div className="flex flex-col gap-2 border-t border-slate-500/10 pt-4">
-        <h3 className="text-sm font-medium text-slate-600">Upcoming events</h3>
+        <h3 className="text-sm font-medium text-slate-600">{t.matches.upcomingEvents}</h3>
         {events.length === 0 ? (
-          <p className="text-sm text-slate-500/50">
-            No events posted yet.
-          </p>
+          <p className="text-sm text-slate-500/50">{t.matches.noEventsPosted}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {events.map((event) => (
-              <EventRow key={event.id} event={event} />
+              <EventRow key={event.id} event={event} orgName={organization.name} />
             ))}
           </ul>
         )}
@@ -223,13 +221,14 @@ function OrganizationCard({ match }: { match: Match }) {
   );
 }
 
-function EventRow({ event }: { event: OrgEvent }) {
+function EventRow({ event, orgName }: { event: OrgEvent; orgName: string }) {
+  const locale = useLocale();
   const time = [event.start_time, event.end_time].filter(Boolean).join(" – ");
 
   const content = (
     <>
-      <span className="w-14 shrink-0 rounded-full bg-slate-500/10 py-1 text-center text-xs font-medium text-slate-600">
-        {formatEventDate(event.start_date)}
+      <span className="w-16 shrink-0 rounded-full bg-slate-500/10 py-1 text-center text-xs font-medium text-slate-600">
+        {formatEventDate(event.start_date, locale)}
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="text-sm text-slate-600">{event.title}</span>
@@ -252,19 +251,20 @@ function EventRow({ event }: { event: OrgEvent }) {
   );
 
   return (
-    <li>
+    <li className="flex items-center gap-2">
       {event.source_url ? (
         <a
           href={event.source_url}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 rounded-xl p-1 transition-colors hover:bg-slate-500/5"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 transition-colors hover:bg-slate-500/5"
         >
           {content}
         </a>
       ) : (
-        <div className="flex items-center gap-3 p-1">{content}</div>
+        <div className="flex min-w-0 flex-1 items-center gap-3 p-1">{content}</div>
       )}
+      <AddToCalendar entry={calendarEntry(event, orgName)} iconOnly variant="light" />
     </li>
   );
 }

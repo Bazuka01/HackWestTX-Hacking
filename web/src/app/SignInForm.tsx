@@ -4,8 +4,8 @@ import { useState, type SubmitEvent } from "react";
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import { Blinds } from "@/components/effects/Blinds";
 import { Iris } from "@/components/effects/Iris";
-import { useLanguage } from "@/components/LanguageProvider";
-import { TRANSLATIONS } from "@/lib/i18n";
+import { useLanguage, useT } from "@/components/LanguageProvider";
+import { AUTH0_LOCALES } from "@/lib/i18n";
 
 type Mode = "signup" | "signin";
 
@@ -28,24 +28,30 @@ export function SignInForm() {
   const [mode, setMode] = useState<Mode>("signup");
   const [revealed, setRevealed] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const language = useLanguage();
+  const allText = useT();
 
   const isSignup = mode === "signup";
-  const t = TRANSLATIONS[language];
+  const t = allText.signIn;
 
+  // Only the email is asked for here: Auth0's own page collects the password,
+  // so asking for it twice would just make students type it again.
   function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    const target = isSignup ? "signup" : "login";
+    const params = new URLSearchParams({
+      screen_hint: isSignup ? "signup" : "login",
+      login_hint: email,
+      // Show Auth0's page in the language picked here.
+      ui_locales: AUTH0_LOCALES[language],
+      // Go to the home page afterwards; it forwards students who haven't
+      // answered the questions yet to onboarding. Without it, the SDK's
+      // default is "/", which is this same form.
+      returnTo: "/homePage",
+    });
     // Full document navigation: the Auth0 route handler issues a redirect
     // to the hosted login page, which a client-side router push can't follow.
-    // returnTo sends the user to their home page after Auth0 finishes; it
-    // forwards students who haven't answered the questions yet to onboarding.
-    // Without it, the SDK's default is "/", which is this same form.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = `/auth/login?screen_hint=${target}&login_hint=${encodeURIComponent(
-      email
-    )}&returnTo=${encodeURIComponent("/homePage")}`;
+    window.location.href = `/auth/login?${params}`;
   }
 
   return (
@@ -88,17 +94,12 @@ export function SignInForm() {
               />
             </motion.div>
 
-            <motion.div variants={item} className="w-full">
-              <input
-                type="password"
-                required
-                autoComplete={isSignup ? "new-password" : "current-password"}
-                placeholder={t.password}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-full border border-slate-500/30 bg-orange-200 px-6 py-3 text-slate-600/85 placeholder:text-slate-500/60 outline-none transition-colors hover:border-slate-500/55 focus:border-slate-600"
-              />
-            </motion.div>
+            <motion.p
+              variants={item}
+              className="-mt-1 text-center text-xs text-slate-500/60"
+            >
+              {t.passwordNextStep}
+            </motion.p>
 
             {!isSignup && (
               <motion.a
@@ -106,7 +107,7 @@ export function SignInForm() {
                 variants={item}
                 className="cursor-pointer text-sm text-slate-500/40 transition-colors duration-300 ease-out hover:text-slate-500"
               >
-                Forgot password?
+                {t.forgotPassword}
               </motion.a>
             )}
 

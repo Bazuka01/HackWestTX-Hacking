@@ -2,7 +2,8 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth0 } from "@/lib/auth0";
-import type { Dashboard, Matches, StudentProfile } from "@/lib/api";
+import type { BrowseData, Dashboard, Matches, StudentProfile } from "@/lib/api";
+import type { LanguageCode } from "@/lib/i18n";
 
 // Server-side access to the signed-in student's account. The FastAPI backend
 // trusts calls carrying INTERNAL_API_KEY, so this module must never be
@@ -106,8 +107,31 @@ export function putProfile(profile: StudentProfile) {
 }
 
 // Returns the saved matches, or asks Gemini for new ones if there are none.
-export function postMatches() {
-  return callBackend<Matches>("/users/me/matches", { method: "POST" });
+// refresh asks for different organizations than the current matches.
+export function postMatches(options: {
+  refresh?: boolean;
+  language: LanguageCode;
+}) {
+  return callBackend<Matches>("/users/me/matches", {
+    method: "POST",
+    body: options,
+  });
+}
+
+export function getBrowseData() {
+  return callBackend<BrowseData>("/users/me/orgs");
+}
+
+export function putHiddenOrg(orgId: string) {
+  return callBackend<void>(`/users/me/hidden-orgs/${encodeURIComponent(orgId)}`, {
+    method: "PUT",
+  });
+}
+
+export function deleteHiddenOrg(orgId: string) {
+  return callBackend<void>(`/users/me/hidden-orgs/${encodeURIComponent(orgId)}`, {
+    method: "DELETE",
+  });
 }
 
 export function putSavedEvent(eventId: string) {

@@ -1,7 +1,10 @@
 "use client";
 
 import { Check, Plus } from "lucide-react";
+import { AddToCalendar } from "@/components/AddToCalendar";
+import { useLocale, useT } from "@/components/LanguageProvider";
 import { formatEventDate, type OrgEvent } from "@/lib/api";
+import { calendarEntry } from "@/lib/calendarLinks";
 import { OTHER_ORG_COLOR } from "@/lib/matchColors";
 
 export function EventTile({
@@ -19,10 +22,12 @@ export function EventTile({
   isSaved: boolean;
   onSave: () => void;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const details = [
-    formatEventDate(event.start_date),
+    formatEventDate(event.start_date, locale),
     event.start_time,
-    event.location ?? "Location TBA",
+    event.location ?? t.common.locationTba,
   ].filter(Boolean);
 
   return (
@@ -31,27 +36,31 @@ export function EventTile({
         featured ? "p-6" : "p-4"
       }`}
     >
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={isSaved}
-        aria-label={isSaved ? "Already saved" : "Save event"}
-        className={`absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-          isSaved
-            ? "cursor-default bg-[#2E2E2E] text-[#8C8785]"
-            : "cursor-pointer bg-[#C8102E] text-white hover:bg-[#a90d26]"
-        }`}
-      >
-        {isSaved ? (
-          <Check className="h-4 w-4" strokeWidth={3} />
-        ) : (
-          <Plus className="h-4 w-4" strokeWidth={3} />
-        )}
-      </button>
+      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+        <AddToCalendar entry={calendarEntry(event, orgName)} iconOnly />
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={isSaved}
+          aria-label={isSaved ? t.common.alreadySaved : t.common.saveEvent}
+          title={isSaved ? t.common.alreadySaved : t.common.saveEvent}
+          className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+            isSaved
+              ? "cursor-default bg-[#2E2E2E] text-[#8C8785]"
+              : "cursor-pointer bg-[#C8102E] text-white hover:bg-[#a90d26]"
+          }`}
+        >
+          {isSaved ? (
+            <Check className="h-4 w-4" strokeWidth={3} />
+          ) : (
+            <Plus className="h-4 w-4" strokeWidth={3} />
+          )}
+        </button>
+      </div>
 
       <div>
         <div
-          className="mb-2 inline-flex max-w-[calc(100%-2rem)] items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium text-[#F2F0EE]"
+          className="mb-2 inline-flex max-w-[calc(100%-4.5rem)] items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium text-[#F2F0EE]"
           style={{ backgroundColor: `${orgColor}33` }}
         >
           <span
@@ -61,7 +70,7 @@ export function EventTile({
           <span className="truncate">{orgName}</span>
         </div>
         <div
-          className={`pr-8 font-semibold text-[#F2F0EE] ${
+          className={`pr-16 font-semibold text-[#F2F0EE] ${
             featured ? "text-xl" : "text-[15px]"
           }`}
         >

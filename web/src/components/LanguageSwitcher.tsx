@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { LANGUAGES, type LanguageCode } from "@/lib/i18n";
 
-const DASHBOARD_ROUTES = ["/homePage", "/calendar", "/savedEvents"];
+const DASHBOARD_ROUTES = ["/homePage", "/calendar", "/savedEvents", "/browse"];
 
 export function LanguageSwitcher({
   value,
@@ -35,6 +35,7 @@ export function LanguageSwitcher({
         <button
           ref={triggerRef}
           type="button"
+          aria-label={current.label}
           className={
             isDashboard
               ? "fixed top-6 right-6 z-40 flex cursor-pointer items-center gap-2 rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-4 py-2 text-sm text-[#F2F0EE] outline-none transition-colors hover:border-[#C8102E]"
@@ -52,7 +53,8 @@ export function LanguageSwitcher({
             <circle cx="12" cy="12" r="9" />
             <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
           </svg>
-          {current.label}
+          {/* Icon only on phones, so the dashboard nav has room. */}
+          <span className="hidden sm:inline">{current.label}</span>
         </button>
       </DropdownMenu.Trigger>
 
