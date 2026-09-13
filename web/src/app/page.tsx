@@ -1,39 +1,122 @@
-import { auth0 } from "@/lib/auth0";
+"use client";
 
-export default async function Home() {
-  const session = await auth0.getSession();
+import { useState, type SubmitEvent } from "react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
+import { Blinds } from "@/components/effects/Blinds";
+import { Iris } from "@/components/effects/Iris";
+import { useLanguage } from "@/components/LanguageProvider";
+import { TRANSLATIONS } from "@/lib/i18n";
+
+type Mode = "signup" | "signin";
+
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05, delayChildren: 0.03 } },
+};
+
+const fieldGroup: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+};
+
+export default function Home() {
+  const [mode, setMode] = useState<Mode>("signup");
+  const [revealed, setRevealed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const language = useLanguage();
+
+  const isSignup = mode === "signup";
+  const t = TRANSLATIONS[language];
+
+  function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const target = isSignup ? "signup" : "login";
+    // Full document navigation: the Auth0 route handler issues a redirect
+    // to the hosted login page, which a client-side router push can't follow.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = `/auth/login?screen_hint=${target}&login_hint=${encodeURIComponent(
+      email
+    )}`;
+  }
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-center gap-6 py-32 px-16 bg-white dark:bg-black text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          {session ? `Welcome, ${session.user.name}!` : "Welcome"}
-        </h1>
+    <div className="relative flex min-h-screen w-full flex-1 items-center justify-center overflow-hidden bg-orange-200">
+      <AnimatePresence mode="wait" onExitComplete={() => setRevealed(false)}>
+        <motion.div
+          key={mode}
+          className="relative flex w-full max-w-sm flex-col items-center gap-6 px-8 py-16"
+          variants={container}
+          initial="hidden"
+          animate={revealed ? "show" : "hidden"}
+        >
+          {isSignup ? (
+            <Blinds onComplete={() => setRevealed(true)} />
+          ) : (
+            <Iris onComplete={() => setRevealed(true)} />
+          )}
 
-        {session ? (
-          <a
-            href="/auth/logout"
-            className="flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-6 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+          <motion.h1
+            className="text-3xl font-semibold tracking-tight text-slate-600"
+            variants={item}
           >
-            Log out
-          </a>
-        ) : (
-          <div className="flex gap-4">
-            <a
-              href="/auth/login?screen_hint=signup"
-              className="flex h-12 items-center justify-center rounded-full bg-foreground px-6 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            {isSignup ? t.createAccount : t.signIn}
+          </motion.h1>
+
+          <motion.form
+            onSubmit={handleSubmit}
+            className="flex w-full flex-col items-center gap-4"
+            variants={fieldGroup}
+          >
+            <motion.div variants={item} className="w-full">
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                placeholder={t.email}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-full border border-slate-500/30 bg-orange-200 px-6 py-3 text-slate-600/85 placeholder:text-slate-500/60 outline-none transition-colors hover:border-slate-500/55 focus:border-slate-600"
+              />
+            </motion.div>
+
+            <motion.div variants={item} className="w-full">
+              <input
+                type="password"
+                required
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                placeholder={t.password}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-full border border-slate-500/30 bg-orange-200 px-6 py-3 text-slate-600/85 placeholder:text-slate-500/60 outline-none transition-colors hover:border-slate-500/55 focus:border-slate-600"
+              />
+            </motion.div>
+
+            <motion.button
+              type="button"
+              variants={item}
+              onClick={() => setMode(isSignup ? "signin" : "signup")}
+              className="cursor-pointer text-sm text-slate-500/40 transition-colors duration-300 ease-out hover:text-slate-500"
             >
-              Sign up
-            </a>
-            <a
-              href="/auth/login"
-              className="flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-6 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            >
-              Log in
-            </a>
-          </div>
-        )}
-      </main>
+              {isSignup ? t.haveAccount : t.newHere}
+            </motion.button>
+
+            <motion.div variants={item} className="w-full">
+              <button
+                type="submit"
+                className="w-full cursor-pointer rounded-full bg-slate-500 py-3 text-orange-50 transition-colors hover:bg-slate-600"
+              >
+                {isSignup ? t.createAccount : t.signIn}
+              </button>
+            </motion.div>
+          </motion.form>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
