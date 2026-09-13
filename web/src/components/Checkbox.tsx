@@ -12,17 +12,17 @@ type CheckboxProps = {
 export function Checkbox({ label, checked, disabled, onChange }: CheckboxProps) {
   return (
     <label
-      className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
+      className={`font-heading flex items-center gap-2 rounded-full border border-[#F3A5A5]/25 px-4 py-2 text-sm transition-colors ${
         disabled
-          ? "cursor-not-allowed border-slate-500/10 opacity-40"
-          : "cursor-pointer border-slate-500/15 hover:border-slate-500/40"
-      } ${checked ? "border-slate-500 bg-slate-500/5" : ""}`}
+          ? "cursor-not-allowed opacity-40"
+          : "cursor-pointer hover:border-[#F3A5A5]"
+      } ${checked ? "bg-[#DC143C]/10" : ""}`}
     >
       <RadixCheckbox.Root
         checked={checked}
         disabled={disabled}
         onCheckedChange={onChange}
-        className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-slate-500/40 outline-none data-[state=checked]:border-slate-500 data-[state=checked]:bg-slate-500"
+        className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-[#F3A5A5]/50 outline-none data-[state=checked]:border-[#DC143C] data-[state=checked]:bg-[#DC143C]"
       >
         <RadixCheckbox.Indicator>
           <svg
@@ -31,13 +31,13 @@ export function Checkbox({ label, checked, disabled, onChange }: CheckboxProps) 
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
-            className="h-3 w-3 text-orange-50"
+            className="h-3 w-3 text-white"
           >
             <path d="M20 6 9 17l-5-5" />
           </svg>
         </RadixCheckbox.Indicator>
       </RadixCheckbox.Root>
-      <span className="text-slate-500">{label}</span>
+      <span className="text-[#F3A5A5]">{label}</span>
     </label>
   );
 }

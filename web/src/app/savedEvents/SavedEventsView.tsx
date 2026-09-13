@@ -144,11 +144,11 @@ export function SavedEventsView({ savedEvents }: { savedEvents: SavedEvent[] }) 
   }
 
   return (
-    <div ref={rootRef} className="relative min-h-screen w-full bg-[#0D0D0D]">
+    <div ref={rootRef} className="relative min-h-screen w-full bg-[#1A1A1A]">
       <DashboardNav active="saved" />
 
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 px-6 pt-28 pb-16">
-        <h1 className="text-3xl font-semibold tracking-tight text-[#F2F0EE]">
+        <h1 className="font-heading text-3xl font-semibold tracking-tight text-[#DC143C]">
           Saved Events
         </h1>
 
@@ -176,10 +176,10 @@ export function SavedEventsView({ savedEvents }: { savedEvents: SavedEvent[] }) 
                     location: event.location,
                   })
                 }
-                className="event-card relative flex aspect-square cursor-pointer flex-col justify-between rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] p-4 text-left transition-colors hover:border-[#C8102E]"
+                className="event-card relative flex aspect-square cursor-pointer flex-col justify-between rounded-2xl border border-[#2E2E2E] bg-[#242424] p-4 text-left transition-colors hover:border-[#DC143C]"
               >
                 <div>
-                  <p className="text-sm font-semibold text-[#F2F0EE]">
+                  <p className="font-heading text-sm font-semibold text-white underline decoration-[#DC143C] underline-offset-2">
                     {event.title}
                   </p>
                   <p className="mt-1 text-xs text-[#8C8785]">
@@ -208,7 +208,7 @@ export function SavedEventsView({ savedEvents }: { savedEvents: SavedEvent[] }) 
             exit={{ opacity: 0, y: 8 }}
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-6 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full bg-[#C8102E] text-white shadow-lg"
+            className="fixed bottom-6 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full bg-[#DC143C] text-white shadow-lg"
           >
             <ChevronDown className="h-5 w-5" />
           </motion.button>
@@ -238,7 +238,7 @@ function EmptyState({
       <p className="text-[#8C8785]">{message}</p>
       <Link
         href={href}
-        className="rounded-full bg-[#C8102E] px-6 py-3 text-white transition-colors hover:bg-[#a90d26]"
+        className="rounded-full bg-[#DC143C] px-6 py-3 text-white transition-colors hover:bg-[#a90d26]"
       >
         {linkLabel}
       </Link>

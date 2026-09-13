@@ -57,15 +57,14 @@ function buildMonthGrid(year: number, month: number): Cell[] {
 }
 
 function buildWeekCells(now: Date) {
-  const diffToMonday = (now.getDay() + 6) % 7;
-  const monday = new Date(
+  const sunday = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate() - diffToMonday
+    now.getDate() - now.getDay()
   );
 
-  return Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + i);
     return {
       day: d.getDate(),
       weekday: WEEKDAYS[d.getDay()],
@@ -133,7 +132,7 @@ export function CalendarView({
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0D0D0D]">
+    <div className="min-h-screen w-full bg-[#1A1A1A]">
       <DashboardNav active="calendar" />
 
       <div className="mx-auto max-w-7xl px-6 pt-28 pb-16">
@@ -143,7 +142,7 @@ export function CalendarView({
               type="button"
               onClick={() => setView("month")}
               className={`cursor-pointer transition-colors ${
-                view === "month" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
+                view === "month" ? "text-[#DC143C]" : "text-[#8C8785] hover:text-[#DC143C]"
               }`}
             >
               Monthly
@@ -152,14 +151,14 @@ export function CalendarView({
               type="button"
               onClick={() => setView("week")}
               className={`cursor-pointer transition-colors ${
-                view === "week" ? "text-[#C8102E]" : "text-[#8C8785] hover:text-[#C8102E]"
+                view === "week" ? "text-[#DC143C]" : "text-[#8C8785] hover:text-[#DC143C]"
               }`}
             >
               Weekly
             </button>
           </div>
 
-          <h1 className="text-center text-2xl font-bold tracking-tight text-[#F2F0EE]">
+          <h1 className="font-heading text-center text-3xl font-bold tracking-tight text-[#DC143C]">
             {view === "month" ? monthLabel : weekLabel}
           </h1>
 
@@ -167,9 +166,9 @@ export function CalendarView({
             {orgs.map((org) => (
               <div
                 key={org.id}
-                className="flex items-center gap-1.5 text-sm font-medium text-[#F2F0EE]"
+                className="flex items-center gap-1.5 text-xs font-medium text-white"
               >
-                <span className="h-2.5 w-2.5" style={{ backgroundColor: org.color }} />
+                <span className="h-2 w-2" style={{ backgroundColor: org.color }} />
                 {org.name}
               </div>
             ))}
@@ -178,7 +177,7 @@ export function CalendarView({
 
         {view === "month" ? (
           <div className="mt-6 overflow-hidden rounded-lg border border-[#2E2E2E]">
-            <div className="grid grid-cols-7 border-b border-[#2E2E2E] bg-[#1A1A1A]">
+            <div className="grid grid-cols-7 border-b border-[#2E2E2E] bg-[#242424]">
               {WEEKDAYS.map((day) => (
                 <div
                   key={day}
@@ -207,7 +206,7 @@ export function CalendarView({
           </div>
         ) : (
           <div className="mt-6 overflow-hidden rounded-lg border border-[#2E2E2E]">
-            <div className="grid grid-cols-5 border-b border-[#2E2E2E] bg-[#1A1A1A]">
+            <div className="grid grid-cols-7 border-b border-[#2E2E2E] bg-[#242424]">
               {weekCells.map((cell) => (
                 <div
                   key={cell.dateKey}
@@ -218,7 +217,7 @@ export function CalendarView({
               ))}
             </div>
 
-            <div className="grid grid-cols-5 [&>*:nth-child(5n)]:border-r-0">
+            <div className="grid grid-cols-7 [&>*:nth-child(7n)]:border-r-0">
               {weekCells.map((cell) => (
                 <DayCell
                   key={cell.dateKey}
@@ -276,13 +275,15 @@ function DayCell({
             type="button"
             title={event.title}
             onClick={() => onSelectEvent(event)}
-            className={`flex cursor-pointer items-center gap-1.5 text-left font-medium text-[#F2F0EE] transition-colors hover:text-[#C8102E] ${eventTextClass}`}
+            className={`flex cursor-pointer items-center gap-1.5 text-left font-medium text-white transition-colors hover:text-[#DC143C] ${eventTextClass}`}
           >
             <span
               className="h-1.5 w-1.5 shrink-0"
               style={{ backgroundColor: event.color }}
             />
-            <span className="truncate">{event.title}</span>
+            <span className="font-heading truncate underline decoration-[#DC143C] underline-offset-2">
+              {event.title}
+            </span>
           </button>
         ))}
         {dayEvents.length > maxEvents && (

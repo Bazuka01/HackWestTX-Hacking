@@ -54,14 +54,14 @@ export function ChainFall({ onComplete }: { onComplete?: () => void }) {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-      <div ref={backdropRef} className="absolute inset-0 bg-slate-500" />
+      <div ref={backdropRef} className="absolute inset-0 bg-[#DC143C]" />
       {CHAIN_PIECES.map((p, i) => (
         <div
           key={i}
           ref={(el) => {
             pieceRefs.current[i] = el;
           }}
-          className="absolute text-orange-50"
+          className="absolute text-white"
           style={{ left: `${p.left}vw`, top: `${p.top}vh`, width: p.size, height: p.size }}
         >
           <Link className="h-full w-full" strokeWidth={2} />
