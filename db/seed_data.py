@@ -4,11 +4,20 @@ from pathlib import Path
 from psycopg2.extras import execute_values
 from db import get_connection
 
-# Load the tagged organizations the backend recommends from.
-with (Path(__file__).parent.parent / "backend" / "org.json").open(
-    encoding="utf-8"
-) as file:
-    tagged_orgs = json.load(file)
+BACKEND_DIR = Path(__file__).parent.parent / "backend"
+
+
+# Read one of the backend's JSON data files.
+def load_backend_json(filename):
+    with (BACKEND_DIR / filename).open(encoding="utf-8") as file:
+        return json.load(file)
+
+
+# Load the tagged organizations, each organization's Instagram username,
+# and the events collected from those Instagram accounts.
+tagged_orgs = load_backend_json("org.json")
+instagram_usernames = load_backend_json("orgmap.json")
+events = load_backend_json("events.json")
 
 # The rest of the campus catalog, ordered alphabetically as published.
 # Organizations already in backend/org.json are left out of this list.
@@ -436,23 +445,54 @@ CATALOG_ORGS = [
     ("org_451", "Zamo Raiders", "Hobbies/Special Interest"),
 ]
 
-# Upsert on id the same way backend/seedOrgs.js does, so rerunning either
-# seeder never duplicates rows. Culture tag, contact, and meeting time are not
-# overwritten, so values filled in by hand are kept.
-INSERT_QUERY = """
-INSERT INTO orgs (id, name, category, interest_tags, hobby_tags, culture_tag, contact, meeting_time)
+# Upsert on id so rerunning this script never duplicates rows. Culture tag,
+# contact, and meeting time are not overwritten, and an Instagram username is
+# only replaced when orgmap.json has one, so values filled in by hand are kept.
+INSERT_ORGS = """
+INSERT INTO orgs (id, name, category, interest_tags, hobby_tags, culture_tag, contact, meeting_time, instagram_username)
 VALUES %s
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     category = EXCLUDED.category,
     interest_tags = EXCLUDED.interest_tags,
-    hobby_tags = EXCLUDED.hobby_tags
+    hobby_tags = EXCLUDED.hobby_tags,
+    instagram_username = COALESCE(EXCLUDED.instagram_username, orgs.instagram_username)
+"""
+
+# Fields shared by backend/events.json and the events table.
+EVENT_COLUMNS = [
+    "id",
+    "org_id",
+    "title",
+    "start_date",
+    "end_date",
+    "start_time",
+    "end_time",
+    "timezone",
+    "location",
+    "status",
+    "details_complete",
+    "source_username",
+    "source_url",
+    "source_posted_at",
+]
+
+# events.json is rebuilt from the Instagram scrape, so its values always win.
+INSERT_EVENTS = f"""
+INSERT INTO events ({', '.join(EVENT_COLUMNS)})
+VALUES %s
+ON CONFLICT (id) DO UPDATE SET
+    {', '.join(f'{column} = EXCLUDED.{column}' for column in EVENT_COLUMNS[1:])}
 """
 
 
 def seed_database():
-    # Turn both lists into rows that match the orgs table columns.
-    rows = [
+    usernames_by_org = {
+        org_id: username for username, org_id in instagram_usernames.items()
+    }
+
+    # Turn both organization lists into rows that match the orgs table columns.
+    org_rows = [
         (
             org["id"],
             org["name"],
@@ -462,22 +502,30 @@ def seed_database():
             org.get("cultureTag"),
             org.get("contact"),
             org.get("meetingTime"),
+            usernames_by_org.get(org["id"]),
         )
         for org in tagged_orgs
     ]
-    rows += [
-        (org_id, name, category, [], [], None, None, None)
+    org_rows += [
+        (org_id, name, category, [], [], None, None, None, usernames_by_org.get(org_id))
         for org_id, name, category in CATALOG_ORGS
     ]
 
-    # Send every row in one statement instead of one round trip per row.
+    event_rows = [
+        tuple(event.get(column) for column in EVENT_COLUMNS) for event in events
+    ]
+
+    # Send each table's rows in a few large statements instead of one per row.
+    # Orgs go first so every event's org_id already exists.
     with closing(get_connection()) as conn:
         with conn, conn.cursor() as cursor:
-            execute_values(cursor, INSERT_QUERY, rows)
+            execute_values(cursor, INSERT_ORGS, org_rows)
+            execute_values(cursor, INSERT_EVENTS, event_rows)
 
     print(
-        f"Seeding complete: {len(tagged_orgs)} orgs from backend/org.json "
-        f"and {len(CATALOG_ORGS)} from the catalog."
+        f"Seeding complete: {len(org_rows)} orgs ({len(tagged_orgs)} from "
+        f"backend/org.json, {len(CATALOG_ORGS)} from the catalog) and "
+        f"{len(event_rows)} events from backend/events.json."
     )
 
 

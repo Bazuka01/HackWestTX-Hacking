@@ -1,13 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from database import fetch_orgs
+from database import fetch_events, fetch_orgs
 from gemini_service import recommend_orgs
-
-# Load the actual organization list from our JSON file.
-with (Path(__file__).parent / "org.json").open(
-    encoding="utf-8"
-) as file:
-    organizations = json.load(file)
 
 # Create the backend application.
 app = FastAPI()
@@ -26,7 +20,25 @@ class StudentProfile(BaseModel):
     ethnicity: str | None = None
 
 
-# Receive answers, call Gemini, and return the three matches.
+# Load the organizations from the TigerData database, call Gemini, and return
+# the recommendations with organization and event details.
 @app.post("/recommendations")
 def get_recommendations(profile: StudentProfile):
-    return recommend_orgs(profile.model_dump(), organizations)
+    organizations = fetch_orgs()
+    result = recommend_orgs(profile.model_dump(), organizations)
+
+    orgs_by_id = {org["id"]: org for org in organizations}
+    org_ids = [recommendation["org_id"] for recommendation in result["recommendations"]]
+    events = fetch_events(org_ids)
+
+    for recommendation in result["recommendations"]:
+        org_id = recommendation["org_id"]
+
+        recommendation["organization"] = orgs_by_id.get(org_id)
+
+        recommendation["events"] = [
+            event for event in events
+            if event["org_id"] == org_id
+        ]
+
+    return result
